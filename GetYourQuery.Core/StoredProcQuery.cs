@@ -49,7 +49,7 @@ namespace GetYourQuery.Core
 
         public string QueryGet(string schemaName, string procedureName, string paramNameAndData)
         {
-            var query = $"exec [{schemaName}].[{procedureName}] {paramNameAndData.TrimStart(',', ' ').Replace(",", "," + Environment.NewLine)} {nonIdParamColumnTable.Replace(",", "," + Environment.NewLine)}";
+            var query = $"exec [{schemaName}].[{procedureName}] {paramNameAndData.TrimStart(',', ' ').Replace(",", Environment.NewLine + ",")} {nonIdParamColumnTable.Replace(",", Environment.NewLine + ",")}";
             return query;
         }
 

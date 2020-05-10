@@ -6,9 +6,12 @@ namespace GetYourQuery.Core
 {
     class AddStoredProcQuery : StoredProcQuery, IStoredProcQuery
     {
-        public override Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName)
+        public Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName, string storedProcName)
         {
             var paramColumnTable = new Dictionary<string, ColumnTablePair>();
+
+            var insertTableName = storedProcName.Replace("usp_", "")
+                                                .Replace("Add", "");
 
             foreach (var name in IdList)
             {
@@ -29,7 +32,7 @@ namespace GetYourQuery.Core
                                         .Replace("@", "")
                                         );
 
-                        if (IsTableExists(tableName))
+                        if (IsTableExists(tableName) && tableName != insertTableName)
                         {
                             paramColumnTable.Add(name, new ColumnTablePair(columnName, $"[{schemaName}].[{tableName}]"));
                         }

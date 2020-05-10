@@ -6,7 +6,9 @@ namespace GetYourQuery.Core
 {
     public interface IRepository
     {
-        DataTable ParametersTableGet();
+        DataTable ParametersTableGet(string procedure, string schema);
         string ParametersDataGet(Dictionary<string, ColumnTablePair> paramColumnTable);
+
+        DataTable StoredProcedureNamesGet(string schema);
     }
 }

@@ -10,15 +10,13 @@ namespace GetYourQuery.Core
 
     {
         private SqlConnection db;
-        private readonly string procName;
 
-        public Repository(string connString, string procName = null)
+        public Repository(string connString)
         {
             db = new SqlConnection(connString);
-            this.procName = procName;
         }
 
-        public DataTable ParametersTableGet()
+        public DataTable ParametersTableGet(string procedure, string schema)
         {
             DataTable parmsDataTable = new DataTable();
 
@@ -26,7 +24,7 @@ namespace GetYourQuery.Core
             {
                 db.Open();
 
-                parmsDataTable = db.GetSchema("ProcedureParameters", new string[] { null, null, procName });
+                parmsDataTable = db.GetSchema("ProcedureParameters", new string[] { null, schema, procedure });
             }
             finally
             {
@@ -39,7 +37,6 @@ namespace GetYourQuery.Core
 
         public string ParametersDataGet(Dictionary<string, ColumnTablePair> paramColumnTable)
         {
-            //var data = new Dictionary<string, string>();
             var nameValue = "";
             //finds first occurency of suitable data for a parameter
             try
@@ -61,20 +58,6 @@ namespace GetYourQuery.Core
                         nameValue += $" ,{name} = '{reader[columnTable.ColumnName]}'";
                     }
                 }
-
-                //for (int i = 0; i < tableNames.Count; i++)
-                //{
-                //    var query = $"SELECT TOP(1) {columnNames[i]} FROM {tableNames[i]} WHERE IsDeleted = 0";
-
-                //    var cmd = new SqlCommand(query, db);
-
-                //    using SqlDataReader reader = cmd.ExecuteReader();
-                //    while (reader.Read())
-                //    {
-                //        nameValue += $" ,{paramNames[i]} = '{reader[columnNames[i]]}'";
-                //        //data.Add(paramNames[i], reader[columnNames[i]].ToString());
-                //    }
-                //}
             }
             finally
             {
@@ -83,10 +66,22 @@ namespace GetYourQuery.Core
             return nameValue;
         }
 
-        public string ParametersDataGenerate(Dictionary<string, string> paramNames)
+        public DataTable StoredProcedureNamesGet(string schema)
         {
-            throw new NotImplementedException();
-        }
+            DataTable parmsDataTable = new DataTable();
 
+            try
+            {
+                db.Open();
+
+                parmsDataTable = db.GetSchema("Procedures", new string[] { null, schema });
+            }
+            finally
+            {
+                db.Close();
+            }
+
+            return parmsDataTable;
+        }
     }
 }

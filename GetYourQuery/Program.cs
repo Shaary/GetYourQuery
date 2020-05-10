@@ -9,45 +9,38 @@ namespace GetYourQuery
         {
             var connectionString = "Data Source=(localdb)\\MSSQLLocalDB; Initial Catalog=AmazingDb; Integrated Security=True;";
 
-            //Console.WriteLine("Enter schema name: ");
-            //var schema = Console.ReadLine();
-            //Console.WriteLine("Enter stored procedure name: ");
-            //var procName = Console.ReadLine();
+            var c = "y";
+            while (c != "n")
+            {
+                Console.WriteLine("Enter schema name: ");
+                var schema = Console.ReadLine();
+                Console.WriteLine("Enter stored procedure name: ");
+                var procName = Console.ReadLine();
 
-            var repository = new Repository(connectionString, "usp_AccessTypesGet");
+                // classes init
+                var repository = new Repository(connectionString);
+                var storedProcQuery = new StoredProcQuery();
 
-            var storedProcQuery = new StoredProcQuery();
+                var dataTable = repository.ParametersTableGet(procName, schema);
+                var procsTable = repository.StoredProcedureNamesGet(schema);
 
-            var dataTable = repository.ParametersTableGet();
+                storedProcQuery.ProcsNameList = procsTable;
 
-            storedProcQuery.ParamaterNamesGet(dataTable);
+                storedProcQuery.ParamaterNamesGet(dataTable);
 
-            var dict = storedProcQuery.TableAndColumnNamesGet("fs");
+                var dict = storedProcQuery.TableAndColumnNamesGet(schema);
 
+                var data = repository.ParametersDataGet(dict);
 
-            //foreach (string param in parameters)
-            //{
-            //    Console.WriteLine(param);
-            //}
+                var query = storedProcQuery.QueryGet(schema, procName, data);
 
-            var data = repository.ParametersDataGet(dict);
+                Console.WriteLine(query);
 
+                Console.WriteLine("Continue? ");
+                c = Console.ReadLine();
+            }
+            
 
-
-            var query = storedProcQuery.QueryGet("fs", "usp_AccessTypesGet", data);
-
-            Console.WriteLine(query);
-
-            //Test methods
-            //IDbConnection db = new SqlConnection(connectionString);
-            //var data = db.Query("select * from fs.AccessTypes").ToList();
-
-            //var parametersNames = repository.ParametersNamesGet();
-            //var parametersData = repository.ParametersDataGet(parametersNames);
-
-            //var query = new StoredProcQuery(procName, parametersNames, parametersData);
-
-            //Console.WriteLine(query);
         }
     }
 }

@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
-using System.Text;
 
 namespace GetYourQuery.Core
 {
     public class StoredProcQuery : IStoredProcQuery
     {
-
+        public DataTable ProcsNameList { get; set; }
         public List<string> IdList { get; }
         public Dictionary<string, string> ParamList { get; }
 
@@ -15,6 +13,8 @@ namespace GetYourQuery.Core
         {
             IdList = new List<string>();
             ParamList = new Dictionary<string, string>();
+            ProcsNameList = new DataTable();
+
         }
 
         //TODO: split logic for add, get and update stored procs

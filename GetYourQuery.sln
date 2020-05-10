@@ -12,6 +12,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GetYourQuery.Data", "GetYou
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GetYourQuery.Core", "GetYourQuery.Core\GetYourQuery.Core.csproj", "{CFD1ACFA-2A71-4DAF-8235-8405726CA366}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{AA513872-EBDE-4314-9B55-3E470B6D661A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{63FC22BB-5547-4A7A-B447-CE5630B76078} = {AA513872-EBDE-4314-9B55-3E470B6D661A}
+		{CFD1ACFA-2A71-4DAF-8235-8405726CA366} = {AA513872-EBDE-4314-9B55-3E470B6D661A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E42E7A86-A623-466C-BDC5-95D402DA7E90}

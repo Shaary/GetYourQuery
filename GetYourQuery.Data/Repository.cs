@@ -9,6 +9,8 @@ namespace GetYourQuery.Core
     public class Repository : IRepository
 
     {
+        //TODO: for get stored procedures that have other tables ids create a pool of suitable ids to return data
+        //example: for Equipment that has project id select equipment and project ids from project equipment table
         private SqlConnection db;
 
         public Repository(string connString)

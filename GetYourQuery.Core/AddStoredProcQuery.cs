@@ -21,7 +21,7 @@ namespace GetYourQuery.Core
                     {
                         paramColumnTable.Add(name, new ColumnTablePair("UserId", "[core].[Users]"));
                     }
-                    else
+                    else if (name != "@DeletedByUserId")
                     {
                         var tableName = name.Replace("@filter_", "")
                                 .Replace("_eq", "")

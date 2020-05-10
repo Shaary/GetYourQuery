@@ -12,7 +12,6 @@ namespace GetYourQuery.Core
         public DataTable TableNameTable { get; set; }
         public List<string> IdList { get; }
         public Dictionary<string, string> ParamList { get; }
-
         private string nonIdParamColumnTable;
 
         public StoredProcQuery()

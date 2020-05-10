@@ -3,11 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30011.22
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetYourQuery", "GetYourQuery\GetYourQuery.csproj", "{CF4EDF2C-0EDA-44BA-A9DF-EE13167130E7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GetYourQuery", "GetYourQuery\GetYourQuery.csproj", "{CF4EDF2C-0EDA-44BA-A9DF-EE13167130E7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{63FC22BB-5547-4A7A-B447-CE5630B76078} = {63FC22BB-5547-4A7A-B447-CE5630B76078}
+	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetYourQuery.Data", "GetYourQuery.Data\GetYourQuery.Data.csproj", "{63FC22BB-5547-4A7A-B447-CE5630B76078}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GetYourQuery.Data", "GetYourQuery.Data\GetYourQuery.Data.csproj", "{63FC22BB-5547-4A7A-B447-CE5630B76078}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetYourQuery.Core", "GetYourQuery.Core\GetYourQuery.Core.csproj", "{CFD1ACFA-2A71-4DAF-8235-8405726CA366}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GetYourQuery.Core", "GetYourQuery.Core\GetYourQuery.Core.csproj", "{CFD1ACFA-2A71-4DAF-8235-8405726CA366}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

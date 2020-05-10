@@ -10,5 +10,6 @@ namespace GetYourQuery.Core
         string ParametersDataGet(Dictionary<string, ColumnTablePair> paramColumnTable);
 
         DataTable StoredProcedureNamesGet(string schema);
+        DataTable TableNamesGet(string schema);
     }
 }

@@ -14,5 +14,9 @@ namespace GetYourQuery.Core
         public Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName);
 
         public void ParametersDataGenerate();
+
+        public bool IsNameExists(string procName);
+
+        public bool IsTableExists(string tableName);
     }
 }

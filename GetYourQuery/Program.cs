@@ -24,17 +24,30 @@ namespace GetYourQuery
                 var dataTable = repository.ParametersTableGet(procName, schema);
                 var procsTable = repository.StoredProcedureNamesGet(schema);
 
-                storedProcQuery.ProcsNameList = procsTable;
+                storedProcQuery.ProcNameTable = procsTable;
 
-                storedProcQuery.ParamaterNamesGet(dataTable);
+                var isProcExists = storedProcQuery.IsNameExists(procName);
 
-                var dict = storedProcQuery.TableAndColumnNamesGet(schema);
+                if (isProcExists)
+                {
+                    storedProcQuery.ParamaterNamesGet(dataTable);
 
-                var data = repository.ParametersDataGet(dict);
+                    //Sets storedProcsQuery tableNameTable to check for non-existing tables that will show up from params like ExternalUniqueId
+                    var tablesTable = repository.TableNamesGet(schema);
+                    storedProcQuery.TableNameTable = tablesTable;
 
-                var query = storedProcQuery.QueryGet(schema, procName, data);
+                    var dict = storedProcQuery.TableAndColumnNamesGet(schema);
 
-                Console.WriteLine(query);
+                    var data = repository.ParametersDataGet(dict);
+
+                    var query = storedProcQuery.QueryGet(schema, procName, data);
+
+                    Console.WriteLine(query);
+                }
+                else
+                {
+                    Console.WriteLine("Sorry, I wasn't able to find the stored procedure...");
+                }
 
                 Console.WriteLine("Continue? ");
                 c = Console.ReadLine();

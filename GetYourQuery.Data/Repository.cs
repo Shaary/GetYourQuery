@@ -48,15 +48,20 @@ namespace GetYourQuery.Core
                     var name = item.Key;
                     var columnTable = item.Value;
 
-                    var query = $"SELECT TOP(1) {columnTable.ColumnName} FROM {columnTable.TableName} WHERE IsDeleted = 0";
+                    var query = $"SELECT TOP(1) {columnTable.ColumnName} FROM {columnTable.TableName} WHERE IsDeleted = 0;";
 
                     var cmd = new SqlCommand(query, db);
 
                     using SqlDataReader reader = cmd.ExecuteReader();
-                    while (reader.Read())
+                    if (reader.Read())
                     {
                         nameValue += $" ,{name} = '{reader[columnTable.ColumnName]}'";
+                    } 
+                    else
+                    {
+                        nameValue += $" ,{name} = NULL";
                     }
+                    
                 }
             }
             finally
@@ -68,20 +73,38 @@ namespace GetYourQuery.Core
 
         public DataTable StoredProcedureNamesGet(string schema)
         {
-            DataTable parmsDataTable = new DataTable();
+            DataTable dataTable = new DataTable();
 
             try
             {
                 db.Open();
 
-                parmsDataTable = db.GetSchema("Procedures", new string[] { null, schema });
+                dataTable = db.GetSchema("Procedures", new string[] { null, schema });
             }
             finally
             {
                 db.Close();
             }
 
-            return parmsDataTable;
+            return dataTable;
+        }
+
+        public DataTable TableNamesGet(string schema)
+        {
+            DataTable dataTable = new DataTable();
+
+            try
+            {
+                db.Open();
+
+                dataTable = db.GetSchema("Tables", new string[] { null, schema });
+            }
+            finally
+            {
+                db.Close();
+            }
+
+            return dataTable;
         }
     }
 }

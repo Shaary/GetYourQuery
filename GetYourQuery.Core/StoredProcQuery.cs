@@ -1,11 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 
 namespace GetYourQuery.Core
 {
     public class StoredProcQuery : IStoredProcQuery
     {
-        public DataTable ProcsNameList { get; set; }
+        public DataTable ProcNameTable { get; set; }
+        public DataTable TableNameTable { get; set; }
         public List<string> IdList { get; }
         public Dictionary<string, string> ParamList { get; }
 
@@ -13,7 +15,8 @@ namespace GetYourQuery.Core
         {
             IdList = new List<string>();
             ParamList = new Dictionary<string, string>();
-            ProcsNameList = new DataTable();
+            ProcNameTable = new DataTable();
+            TableNameTable = new DataTable();
 
         }
 
@@ -36,7 +39,6 @@ namespace GetYourQuery.Core
                 {
                     IdList.Add(row[parmName].ToString());
                 }
-                //Console.WriteLine(parmRow[parmTypeDataColumn].ToString());
             }
         }
 
@@ -56,7 +58,6 @@ namespace GetYourQuery.Core
                 {
                     if (name.Contains("ByUser"))
                     {
-                        //tableColumnNames.Add("UserId","[core].[Users]");
                         paramColumnTable.Add(name, new ColumnTablePair("UserId", "[core].[Users]"));
                     }
                     else
@@ -64,14 +65,21 @@ namespace GetYourQuery.Core
                         var tableName = name.Replace("@filter_", "")
                                 .Replace("_eq", "")
                                 .Replace("@", "")
-                                .Replace("Id", "");
+                                .Replace("Id", "") + "s";
                         var columnName = (name.Replace("@filter_", "")
                                         .Replace("_eq", "")
                                         .Replace("@", "")
                                         );
-
-                        //tableColumnNames.Add(columnName, $"[{schema}].{tableName}s");
-                        paramColumnTable.Add(name, new ColumnTablePair(columnName, $"[{schemaName}].{tableName}s"));
+                        
+                        if (IsTableExists(tableName))
+                        {
+                            paramColumnTable.Add(name, new ColumnTablePair(columnName, $"[{schemaName}].{tableName}"));
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                        
                     }
 
                 };
@@ -85,6 +93,51 @@ namespace GetYourQuery.Core
         public void ParametersDataGenerate()
         {
             throw new System.NotImplementedException();
+        }
+
+        public bool IsNameExists(string procName)
+        {
+            DataColumn procedureDataColumn = ProcNameTable.Columns["ROUTINE_NAME"];
+
+            if (procedureDataColumn != null)
+            {
+                foreach (DataRow row in ProcNameTable.Rows)
+                {
+                    var procedureName = row[procedureDataColumn].ToString();
+                    if (procedureName == procName)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public bool IsTableExists(string tableName)
+        {
+            DataColumn tableDataColumn = TableNameTable.Columns["TABLE_NAME"];
+
+            //foreach (DataRow row in TableNameTable.Rows)
+            //{
+            //    foreach (DataColumn column in TableNameTable.Columns)
+            //    {
+            //        Console.WriteLine(row[column]);
+            //    }
+            //}
+
+            if (tableDataColumn != null)
+            {
+                foreach (DataRow row in TableNameTable.Rows)
+                {
+                    var tabName = row[tableDataColumn].ToString();
+                    Console.WriteLine(tabName);
+                    if (tabName == tableName)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }

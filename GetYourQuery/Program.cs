@@ -31,6 +31,7 @@ namespace GetYourQuery
                 if (isProcExists)
                 {
                     storedProcQuery.ParamaterNamesGet(dataTable);
+                    storedProcQuery.ParametersDataGenerate();
 
                     //Sets storedProcsQuery tableNameTable to check for non-existing tables that will show up from params like ExternalUniqueId
                     var tablesTable = repository.TableNamesGet(schema);

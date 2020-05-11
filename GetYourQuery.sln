@@ -14,6 +14,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GetYourQuery.Core", "GetYou
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{AA513872-EBDE-4314-9B55-3E470B6D661A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GetYourQuery.UI", "GetYourQuery.UI\GetYourQuery.UI.csproj", "{05E5EA55-99AC-4A23-8128-2F44DA2FE960}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{CFD1ACFA-2A71-4DAF-8235-8405726CA366}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CFD1ACFA-2A71-4DAF-8235-8405726CA366}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CFD1ACFA-2A71-4DAF-8235-8405726CA366}.Release|Any CPU.Build.0 = Release|Any CPU
+		{05E5EA55-99AC-4A23-8128-2F44DA2FE960}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{05E5EA55-99AC-4A23-8128-2F44DA2FE960}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{05E5EA55-99AC-4A23-8128-2F44DA2FE960}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{05E5EA55-99AC-4A23-8128-2F44DA2FE960}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using GetYourQuery.Core;
 
 namespace GetYourQuery.Core
 {
@@ -58,12 +56,12 @@ namespace GetYourQuery.Core
                     if (reader.Read())
                     {
                         nameValue += $" ,{name} = '{reader[columnTable.ColumnName]}'";
-                    } 
+                    }
                     else
                     {
                         nameValue += $" ,{name} = NULL";
                     }
-                    
+
                 }
             }
             finally
@@ -107,6 +105,30 @@ namespace GetYourQuery.Core
             }
 
             return dataTable;
+        }
+
+        public List<string> SchemaNamesGet()
+        {
+            List<string> schemaList = new List<string>();
+            try
+            {
+                db.Open();
+
+                var query = $"SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA where SCHEMA_NAME not in ('sys', 'guest', 'INFORMATION_SCHEMA') and SCHEMA_NAME not like 'db_%'; ";
+
+                var cmd = new SqlCommand(query, db);
+
+                using SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    schemaList.Add(reader["SCHEMA_NAME"].ToString());
+                }
+            }
+            finally
+            {
+                db.Close();
+            }
+            return schemaList;
         }
     }
 }

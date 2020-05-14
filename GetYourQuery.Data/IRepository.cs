@@ -11,5 +11,6 @@ namespace GetYourQuery.Core
 
         DataTable StoredProcedureNamesGet(string schema);
         DataTable TableNamesGet(string schema);
+        List<string> SchemaNamesGet();
     }
 }

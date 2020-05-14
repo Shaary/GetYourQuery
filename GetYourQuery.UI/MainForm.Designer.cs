@@ -1,6 +1,6 @@
 ﻿namespace GetYourQuery.UI
 {
-    partial class Form1
+    partial class MainForm
     {
         /// <summary>
         ///  Required designer variable.
@@ -29,14 +29,15 @@
         private void InitializeComponent()
         {
             this.spTypeBox = new System.Windows.Forms.GroupBox();
-            this.rbGet = new System.Windows.Forms.RadioButton();
-            this.rbAdd = new System.Windows.Forms.RadioButton();
-            this.rbUpdate = new System.Windows.Forms.RadioButton();
             this.rbDelete = new System.Windows.Forms.RadioButton();
+            this.rbAdd = new System.Windows.Forms.RadioButton();
+            this.rbGet = new System.Windows.Forms.RadioButton();
+            this.rbUpdate = new System.Windows.Forms.RadioButton();
             this.intoLabel = new System.Windows.Forms.Label();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.schemaBox = new System.Windows.Forms.ComboBox();
             this.query = new System.Windows.Forms.TextBox();
             this.btnFind = new System.Windows.Forms.Button();
+            this.schemaLabel = new System.Windows.Forms.Label();
             this.spTypeBox.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -53,17 +54,17 @@
             this.spTypeBox.TabStop = false;
             this.spTypeBox.Text = "Choose type";
             // 
-            // rbGet
+            // rbDelete
             // 
-            this.rbGet.AutoSize = true;
-            this.rbGet.Location = new System.Drawing.Point(5, 26);
-            this.rbGet.Name = "rbGet";
-            this.rbGet.Padding = new System.Windows.Forms.Padding(10);
-            this.rbGet.Size = new System.Drawing.Size(73, 44);
-            this.rbGet.TabIndex = 0;
-            this.rbGet.TabStop = true;
-            this.rbGet.Text = "Get";
-            this.rbGet.UseVisualStyleBackColor = true;
+            this.rbDelete.AutoSize = true;
+            this.rbDelete.Location = new System.Drawing.Point(273, 26);
+            this.rbDelete.Name = "rbDelete";
+            this.rbDelete.Padding = new System.Windows.Forms.Padding(10);
+            this.rbDelete.Size = new System.Drawing.Size(94, 44);
+            this.rbDelete.TabIndex = 3;
+            this.rbDelete.TabStop = true;
+            this.rbDelete.Text = "Delete";
+            this.rbDelete.UseVisualStyleBackColor = true;
             // 
             // rbAdd
             // 
@@ -77,6 +78,18 @@
             this.rbAdd.Text = "Add";
             this.rbAdd.UseVisualStyleBackColor = true;
             // 
+            // rbGet
+            // 
+            this.rbGet.AutoSize = true;
+            this.rbGet.Location = new System.Drawing.Point(5, 26);
+            this.rbGet.Name = "rbGet";
+            this.rbGet.Padding = new System.Windows.Forms.Padding(10);
+            this.rbGet.Size = new System.Drawing.Size(73, 44);
+            this.rbGet.TabIndex = 0;
+            this.rbGet.TabStop = true;
+            this.rbGet.Text = "Get";
+            this.rbGet.UseVisualStyleBackColor = true;
+            // 
             // rbUpdate
             // 
             this.rbUpdate.AutoSize = true;
@@ -89,18 +102,6 @@
             this.rbUpdate.Text = "Update";
             this.rbUpdate.UseVisualStyleBackColor = true;
             // 
-            // rbDelete
-            // 
-            this.rbDelete.AutoSize = true;
-            this.rbDelete.Location = new System.Drawing.Point(273, 26);
-            this.rbDelete.Name = "rbDelete";
-            this.rbDelete.Padding = new System.Windows.Forms.Padding(10);
-            this.rbDelete.Size = new System.Drawing.Size(94, 44);
-            this.rbDelete.TabIndex = 3;
-            this.rbDelete.TabStop = true;
-            this.rbDelete.Text = "Delete";
-            this.rbDelete.UseVisualStyleBackColor = true;
-            // 
             // intoLabel
             // 
             this.intoLabel.AutoSize = true;
@@ -110,13 +111,13 @@
             this.intoLabel.TabIndex = 2;
             this.intoLabel.Text = "Choose your query";
             // 
-            // comboBox1
+            // schemaBox
             // 
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(40, 157);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(486, 28);
-            this.comboBox1.TabIndex = 3;
+            this.schemaBox.FormattingEnabled = true;
+            this.schemaBox.Location = new System.Drawing.Point(40, 157);
+            this.schemaBox.Name = "schemaBox";
+            this.schemaBox.Size = new System.Drawing.Size(486, 28);
+            this.schemaBox.TabIndex = 3;
             // 
             // query
             // 
@@ -136,18 +137,30 @@
             this.btnFind.Text = "Find";
             this.btnFind.UseVisualStyleBackColor = true;
             // 
+            // schemaLabel
+            // 
+            this.schemaLabel.AutoSize = true;
+            this.schemaLabel.Location = new System.Drawing.Point(412, 22);
+            this.schemaLabel.Name = "schemaLabel";
+            this.schemaLabel.Size = new System.Drawing.Size(112, 20);
+            this.schemaLabel.TabIndex = 6;
+            this.schemaLabel.Text = "Choose schema";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.schemaLabel);
             this.Controls.Add(this.btnFind);
             this.Controls.Add(this.query);
-            this.Controls.Add(this.comboBox1);
+            this.Controls.Add(this.schemaBox);
             this.Controls.Add(this.intoLabel);
             this.Controls.Add(this.spTypeBox);
             this.Name = "Form1";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Form1";
+            this.Load += new System.EventHandler(this.MainForm_Load);
             this.spTypeBox.ResumeLayout(false);
             this.spTypeBox.PerformLayout();
             this.ResumeLayout(false);
@@ -157,15 +170,16 @@
 
         #endregion
 
-        private System.Windows.Forms.GroupBox spTypeBox;
+        private System.Windows.Forms.ComboBox spTypeBox;
         private System.Windows.Forms.RadioButton rbDelete;
         private System.Windows.Forms.RadioButton rbAdd;
         private System.Windows.Forms.RadioButton rbGet;
         private System.Windows.Forms.RadioButton rbUpdate;
         private System.Windows.Forms.Label intoLabel;
-        private System.Windows.Forms.ComboBox comboBox1;
+        private System.Windows.Forms.ComboBox schemaBox;
         private System.Windows.Forms.TextBox query;
         private System.Windows.Forms.Button btnFind;
+        private System.Windows.Forms.Label schemaLabel;
     }
 }
 

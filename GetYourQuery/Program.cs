@@ -28,6 +28,8 @@ namespace GetYourQuery
 
                 var isProcExists = storedProcQuery.IsNameExists(procName);
 
+                repository.SchemaNamesGet();
+
                 if (isProcExists)
                 {
                     storedProcQuery.ParamaterNamesGet(dataTable);

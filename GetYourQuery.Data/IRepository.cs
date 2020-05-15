@@ -9,7 +9,7 @@ namespace GetYourQuery.Core
         DataTable ParametersTableGet(string procedure, string schema);
         string ParametersDataGet(Dictionary<string, ColumnTablePair> paramColumnTable);
 
-        DataTable StoredProcedureNamesGet(string schema);
+        List<string> StoredProcedureNamesGet(string schema, string database, string procType);
         DataTable TableNamesGet(string schema);
         List<string> SchemaNamesGet();
     }

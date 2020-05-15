@@ -131,6 +131,7 @@ namespace GetYourQuery.Core
             }
         }
 
+        //Checks if entered value is a valid name
         public bool IsNameExists(string procName)
         {
             DataColumn procedureDataColumn = ProcNameTable.Columns["ROUTINE_NAME"];

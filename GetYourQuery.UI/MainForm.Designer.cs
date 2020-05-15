@@ -1,4 +1,6 @@
-﻿namespace GetYourQuery.UI
+﻿using System;
+
+namespace GetYourQuery.UI
 {
     partial class MainForm
     {
@@ -34,10 +36,11 @@
             this.rbGet = new System.Windows.Forms.RadioButton();
             this.rbUpdate = new System.Windows.Forms.RadioButton();
             this.intoLabel = new System.Windows.Forms.Label();
-            this.schemaBox = new System.Windows.Forms.ComboBox();
-            this.query = new System.Windows.Forms.TextBox();
+            this.storedProcBox = new System.Windows.Forms.ComboBox();
+            this.queryTextBox = new System.Windows.Forms.TextBox();
             this.btnFind = new System.Windows.Forms.Button();
             this.schemaLabel = new System.Windows.Forms.Label();
+            this.schemaBox = new System.Windows.Forms.ComboBox();
             this.spTypeBox.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -47,7 +50,7 @@
             this.spTypeBox.Controls.Add(this.rbAdd);
             this.spTypeBox.Controls.Add(this.rbGet);
             this.spTypeBox.Controls.Add(this.rbUpdate);
-            this.spTypeBox.Location = new System.Drawing.Point(35, 22);
+            this.spTypeBox.Location = new System.Drawing.Point(35, 24);
             this.spTypeBox.Name = "spTypeBox";
             this.spTypeBox.Size = new System.Drawing.Size(368, 93);
             this.spTypeBox.TabIndex = 1;
@@ -65,6 +68,7 @@
             this.rbDelete.TabStop = true;
             this.rbDelete.Text = "Delete";
             this.rbDelete.UseVisualStyleBackColor = true;
+            this.rbDelete.CheckedChanged += new EventHandler(ProcTypeRadioButton_CheckedChanged);
             // 
             // rbAdd
             // 
@@ -77,6 +81,7 @@
             this.rbAdd.TabStop = true;
             this.rbAdd.Text = "Add";
             this.rbAdd.UseVisualStyleBackColor = true;
+            this.rbAdd.CheckedChanged += new EventHandler(ProcTypeRadioButton_CheckedChanged);
             // 
             // rbGet
             // 
@@ -89,6 +94,7 @@
             this.rbGet.TabStop = true;
             this.rbGet.Text = "Get";
             this.rbGet.UseVisualStyleBackColor = true;
+            this.rbGet.CheckedChanged += new EventHandler(ProcTypeRadioButton_CheckedChanged);
             // 
             // rbUpdate
             // 
@@ -101,6 +107,7 @@
             this.rbUpdate.TabStop = true;
             this.rbUpdate.Text = "Update";
             this.rbUpdate.UseVisualStyleBackColor = true;
+            this.rbUpdate.CheckedChanged += new EventHandler(ProcTypeRadioButton_CheckedChanged);
             // 
             // intoLabel
             // 
@@ -111,22 +118,23 @@
             this.intoLabel.TabIndex = 2;
             this.intoLabel.Text = "Choose your query";
             // 
-            // schemaBox
+            // storedProcBox
             // 
-            this.schemaBox.FormattingEnabled = true;
-            this.schemaBox.Location = new System.Drawing.Point(40, 157);
-            this.schemaBox.Name = "schemaBox";
-            this.schemaBox.Size = new System.Drawing.Size(486, 28);
-            this.schemaBox.TabIndex = 3;
+            this.storedProcBox.FormattingEnabled = true;
+            this.storedProcBox.Location = new System.Drawing.Point(48, 157);
+            this.storedProcBox.Name = "storedProcBox";
+            this.storedProcBox.Size = new System.Drawing.Size(486, 28);
+            this.storedProcBox.TabIndex = 3;
+            this.storedProcBox.SelectedValueChanged += new System.EventHandler(StoredProcedureComboBox_SelectedValueChanged);
             // 
-            // query
+            // queryTextBox
             // 
-            this.query.Location = new System.Drawing.Point(40, 223);
-            this.query.Multiline = true;
-            this.query.Name = "query";
-            this.query.ReadOnly = true;
-            this.query.Size = new System.Drawing.Size(486, 185);
-            this.query.TabIndex = 4;
+            this.queryTextBox.Location = new System.Drawing.Point(40, 223);
+            this.queryTextBox.Multiline = true;
+            this.queryTextBox.Name = "queryTextBox";
+            this.queryTextBox.ReadOnly = true;
+            this.queryTextBox.Size = new System.Drawing.Size(486, 185);
+            this.queryTextBox.TabIndex = 4;
             // 
             // btnFind
             // 
@@ -136,6 +144,7 @@
             this.btnFind.TabIndex = 5;
             this.btnFind.Text = "Find";
             this.btnFind.UseVisualStyleBackColor = true;
+            this.btnFind.Click += new System.EventHandler(FindButton_Click);
             // 
             // schemaLabel
             // 
@@ -146,18 +155,28 @@
             this.schemaLabel.TabIndex = 6;
             this.schemaLabel.Text = "Choose schema";
             // 
-            // Form1
+            // schemaBox
+            // 
+            this.schemaBox.FormattingEnabled = true;
+            this.schemaBox.Location = new System.Drawing.Point(417, 47);
+            this.schemaBox.Name = "comboBox1";
+            this.schemaBox.Size = new System.Drawing.Size(151, 28);
+            this.schemaBox.TabIndex = 7;
+            this.schemaBox.SelectedValueChanged += new System.EventHandler(SchemaComboBox_SelectedValueChanged);
+            // 
+            // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.schemaBox);
             this.Controls.Add(this.schemaLabel);
             this.Controls.Add(this.btnFind);
-            this.Controls.Add(this.query);
-            this.Controls.Add(this.schemaBox);
+            this.Controls.Add(this.queryTextBox);
+            this.Controls.Add(this.storedProcBox);
             this.Controls.Add(this.intoLabel);
             this.Controls.Add(this.spTypeBox);
-            this.Name = "Form1";
+            this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.MainForm_Load);
@@ -167,19 +186,19 @@
             this.PerformLayout();
 
         }
-
         #endregion
 
-        private System.Windows.Forms.ComboBox spTypeBox;
+        private System.Windows.Forms.GroupBox spTypeBox;
         private System.Windows.Forms.RadioButton rbDelete;
         private System.Windows.Forms.RadioButton rbAdd;
         private System.Windows.Forms.RadioButton rbGet;
         private System.Windows.Forms.RadioButton rbUpdate;
         private System.Windows.Forms.Label intoLabel;
-        private System.Windows.Forms.ComboBox schemaBox;
-        private System.Windows.Forms.TextBox query;
+        private System.Windows.Forms.ComboBox storedProcBox;
+        private System.Windows.Forms.TextBox queryTextBox;
         private System.Windows.Forms.Button btnFind;
         private System.Windows.Forms.Label schemaLabel;
+        private System.Windows.Forms.ComboBox schemaBox;
     }
 }
 

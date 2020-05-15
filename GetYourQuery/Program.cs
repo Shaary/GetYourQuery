@@ -22,9 +22,9 @@ namespace GetYourQuery
                 var storedProcQuery = new StoredProcQuery();
 
                 var dataTable = repository.ParametersTableGet(procName, schema);
-                var procsTable = repository.StoredProcedureNamesGet(schema);
+                //var procsTable = repository.StoredProcedureNamesGet(schema);
 
-                storedProcQuery.ProcNameTable = procsTable;
+                //storedProcQuery.ProcNameTable = procsTable;
 
                 var isProcExists = storedProcQuery.IsNameExists(procName);
 

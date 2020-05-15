@@ -7,28 +7,30 @@ namespace GetYourQuery.Core
     public class Repository : IRepository
 
     {
+        private readonly string connString;
+
         //TODO: for get stored procedures that have other tables ids create a pool of suitable ids to return data
         //example: for Equipment that has project id select equipment and project ids from project equipment table
-        private SqlConnection db;
 
         public Repository(string connString)
         {
-            db = new SqlConnection(connString);
+            this.connString = connString;
         }
 
         public DataTable ParametersTableGet(string procedure, string schema)
         {
             DataTable parmsDataTable = new DataTable();
+            SqlConnection connection = new SqlConnection(connString);
 
             try
             {
-                db.Open();
+                connection.Open();
 
-                parmsDataTable = db.GetSchema("ProcedureParameters", new string[] { null, schema, procedure });
+                parmsDataTable = connection.GetSchema("ProcedureParameters", new string[] { null, schema, procedure });
             }
             finally
             {
-                db.Close();
+                connection.Close();
             }
 
             return parmsDataTable;
@@ -38,10 +40,12 @@ namespace GetYourQuery.Core
         public string ParametersDataGet(Dictionary<string, ColumnTablePair> paramColumnTable)
         {
             var nameValue = "";
+            SqlConnection connection = new SqlConnection(connString);
+
             //finds first occurency of suitable data for a parameter
             try
             {
-                db.Open();
+                connection.Open();
 
                 foreach (var item in paramColumnTable)
                 {
@@ -50,7 +54,7 @@ namespace GetYourQuery.Core
 
                     var query = $"SELECT TOP(1) {columnTable.ColumnName} FROM {columnTable.TableName} WHERE IsDeleted = 0;";
 
-                    var cmd = new SqlCommand(query, db);
+                    var cmd = new SqlCommand(query, connection);
 
                     using SqlDataReader reader = cmd.ExecuteReader();
                     if (reader.Read())
@@ -66,42 +70,52 @@ namespace GetYourQuery.Core
             }
             finally
             {
-                db.Close();
+                connection.Close();
             }
             return nameValue;
         }
 
-        public DataTable StoredProcedureNamesGet(string schema)
+        public List<string> StoredProcedureNamesGet(string schema, string database, string procType)
         {
-            DataTable dataTable = new DataTable();
+            List<string> storedProcList = new List<string>();
+            SqlConnection connection = new SqlConnection(connString);
 
             try
             {
-                db.Open();
+                connection.Open();
 
-                dataTable = db.GetSchema("Procedures", new string[] { null, schema });
+                var query = $"SELECT SPECIFIC_NAME FROM [{database}].INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' and SPECIFIC_SCHEMA = '{schema}' and SPECIFIC_NAME like '%{procType}'; ";
+
+                var cmd = new SqlCommand(query, connection);
+
+                using SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    storedProcList.Add(reader["SPECIFIC_NAME"].ToString());
+                }
             }
             finally
             {
-                db.Close();
+                connection.Close();
             }
 
-            return dataTable;
+            return storedProcList;
         }
 
         public DataTable TableNamesGet(string schema)
         {
             DataTable dataTable = new DataTable();
+            SqlConnection connection = new SqlConnection(connString);
 
             try
             {
-                db.Open();
+                connection.Open();
 
-                dataTable = db.GetSchema("Tables", new string[] { null, schema });
+                dataTable = connection.GetSchema("Tables", new string[] { null, schema });
             }
             finally
             {
-                db.Close();
+                connection.Close();
             }
 
             return dataTable;
@@ -110,13 +124,15 @@ namespace GetYourQuery.Core
         public List<string> SchemaNamesGet()
         {
             List<string> schemaList = new List<string>();
+            SqlConnection connection = new SqlConnection(connString);
+
             try
             {
-                db.Open();
+                connection.Open();
 
                 var query = $"SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA where SCHEMA_NAME not in ('sys', 'guest', 'INFORMATION_SCHEMA') and SCHEMA_NAME not like 'db_%'; ";
 
-                var cmd = new SqlCommand(query, db);
+                var cmd = new SqlCommand(query, connection);
 
                 using SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
@@ -126,7 +142,7 @@ namespace GetYourQuery.Core
             }
             finally
             {
-                db.Close();
+                connection.Close();
             }
             return schemaList;
         }

@@ -7,11 +7,11 @@ namespace GetYourQuery.Core
 {
     public interface IStoredProcQuery
     {
-        public void ParamaterNamesGet(DataTable parmsDataTable);
+        public void ParamaterNamesSet(DataTable parmsDataTable);
 
         public string QueryGet(string schemaName, string procedureName, string paramNameAndData);
 
-        public Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName);
+        public Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName, string storedProcName = null);
 
         public void ParametersDataGenerate();
 

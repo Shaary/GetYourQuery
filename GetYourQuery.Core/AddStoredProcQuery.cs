@@ -1,12 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using System.Data;
 
 namespace GetYourQuery.Core
 {
-    class AddStoredProcQuery : StoredProcQuery, IStoredProcQuery
+    //TODO: Create list of ignored parameter. Check if name in it. like var matchingvalues = myList.Where(stringToCheck => stringToCheck.Contains(myString));
+    public class AddStoredProcQuery : StoredProcQuery
     {
-        public Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName, string storedProcName)
+        private List<string> excludeParameres = new List<string> { "@DeletedByUserId" };
+
+        public AddStoredProcQuery(DataTable TableNameTable) : base(TableNameTable)
+        {
+        }
+
+        public override Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName, string storedProcName)
         {
             var paramColumnTable = new Dictionary<string, ColumnTablePair>();
 
@@ -15,34 +21,27 @@ namespace GetYourQuery.Core
 
             foreach (var name in IdList)
             {
-                if (name.Contains("Id"))
+                if (!excludeParameres.Contains(name))
                 {
                     if (name.Contains("ByUser"))
                     {
                         paramColumnTable.Add(name, new ColumnTablePair("UserId", "[core].[Users]"));
                     }
-                    else if (name != "@DeletedByUserId")
+                    else
                     {
-                        var tableName = name.Replace("@filter_", "")
-                                .Replace("_eq", "")
-                                .Replace("@", "")
-                                .Replace("Id", "") + "s";
-                        var columnName = (name.Replace("@filter_", "")
-                                        .Replace("_eq", "")
-                                        .Replace("@", "")
-                                        );
+                        var tableName = TableNameGet(name);
+                        var columnName = ColumnNameGet(name);
 
                         if (IsTableExists(tableName) && tableName != insertTableName)
                         {
                             paramColumnTable.Add(name, new ColumnTablePair(columnName, $"[{schemaName}].[{tableName}]"));
                         }
                     }
-
                 };
-
             }
 
             return paramColumnTable;
         }
+
     }
 }

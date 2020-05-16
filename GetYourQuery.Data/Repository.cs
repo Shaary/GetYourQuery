@@ -37,7 +37,7 @@ namespace GetYourQuery.Core
 
         }
 
-        public string ParametersDataGet(Dictionary<string, ColumnTablePair> paramColumnTable)
+        public string IdParametersDataGet(Dictionary<string, ColumnTablePair> paramColumnTable)
         {
             var nameValue = "";
             SqlConnection connection = new SqlConnection(connString);

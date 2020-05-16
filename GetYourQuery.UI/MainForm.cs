@@ -3,6 +3,7 @@ using System;
 using System.Windows.Forms;
 using System.Linq;
 using System.ComponentModel;
+using System.Data;
 
 namespace GetYourQuery.UI
 {
@@ -24,11 +25,6 @@ namespace GetYourQuery.UI
             this.procType = "";
             this.storedProcedureName = "";
             this.databaseName = "AmazingDb";
-        }
-
-        public void btnFind_Click(object sender, EventArgs e)
-        {
-
         }
 
         private void LoadShemaBox(ComboBox schemaBox)
@@ -96,29 +92,45 @@ namespace GetYourQuery.UI
 
         private void FindButton_Click(object sender, EventArgs e)
         {
-            var repository = new Repository(connectionString);
-            var storedProcQuery = new StoredProcQuery();
             var schema = GetSelectedSchema(schemaBox);
 
-            var dataTable = repository.ParametersTableGet(storedProcedureName, schema);
-            repository.SchemaNamesGet();
+            var repository = new Repository(connectionString);
 
-            storedProcQuery.ParamaterNamesGet(dataTable);
-            storedProcQuery.ParametersDataGenerate();
-
-            //Sets storedProcsQuery tableNameTable to check for non-existing tables that will show up from params like ExternalUniqueId
             var tablesTable = repository.TableNamesGet(schema);
-            storedProcQuery.TableNameTable = tablesTable;
 
-            var dict = storedProcQuery.TableAndColumnNamesGet(schema);
+            var storedProcQuery = GetStoredProcQueryType(procType, tablesTable);
 
-            var data = repository.ParametersDataGet(dict);
+            var parametersTable = repository.ParametersTableGet(storedProcedureName, schema);
 
-            var query = storedProcQuery.QueryGet(schema, storedProcedureName, data);
+            storedProcQuery.ParamaterNamesSet(parametersTable);
+            storedProcQuery.ParametersDataGenerate();
+            
+            //TODO: figure out why parent method is called when use ADD proc
+            var dict = storedProcQuery.TableAndColumnNamesGet(schema, storedProcedureName);
+            var data = repository.IdParametersDataGet(dict);
 
-            queryTextBox.Text = query;
+            //TODO: add scroll bar to query text
+            queryTextBox.Text = storedProcQuery.QueryGet(schema, storedProcedureName, data);
+
         }
 
-
+        private IStoredProcQuery GetStoredProcQueryType(string procType, DataTable tablesTable)
+        {
+            switch(procType)
+            {
+                case "Add":
+                    return new AddStoredProcQuery(tablesTable);
+                case "Update":
+                    return new UpdateStoredProcQuery(tablesTable);
+                case "Delete":
+                    return new DeleteStoredProcQuery(tablesTable);
+                case "Get":
+                    return new GetStoredProcQuery(tablesTable);
+                default:
+                    {
+                        throw new Exception("Type wasn't found");
+                    }
+            }
+        }
     }
 }

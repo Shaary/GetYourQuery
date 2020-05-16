@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 
 namespace GetYourQuery.Core
 {
-    class DeleteStoredProcQuery : StoredProcQuery, IStoredProcQuery
+    public class DeleteStoredProcQuery : StoredProcQuery, IStoredProcQuery
     {
+        public DeleteStoredProcQuery(DataTable TableNameTable) : base(TableNameTable)
+        {
+        }
     }
 }

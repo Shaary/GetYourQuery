@@ -32,7 +32,7 @@ namespace GetYourQuery
 
                 if (isProcExists)
                 {
-                    storedProcQuery.ParamaterNamesGet(dataTable);
+                    storedProcQuery.ParamaterNamesSet(dataTable);
                     storedProcQuery.ParametersDataGenerate();
 
                     //Sets storedProcsQuery tableNameTable to check for non-existing tables that will show up from params like ExternalUniqueId
@@ -41,7 +41,7 @@ namespace GetYourQuery
 
                     var dict = storedProcQuery.TableAndColumnNamesGet(schema);
 
-                    var data = repository.ParametersDataGet(dict);
+                    var data = repository.IdParametersDataGet(dict);
 
                     var query = storedProcQuery.QueryGet(schema, procName, data);
 

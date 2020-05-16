@@ -7,25 +7,27 @@ namespace GetYourQuery.Core
 {
     public class StoredProcQuery : IStoredProcQuery
     {
-        const string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        public const string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
         public DataTable ProcNameTable { get; set; }
         public DataTable TableNameTable { get; set; }
         public List<string> IdList { get; }
         public Dictionary<string, string> ParamList { get; }
         private string nonIdParamColumnTable;
 
-        public StoredProcQuery()
+        public StoredProcQuery(DataTable TableNameTable)
         {
             IdList = new List<string>();
             ParamList = new Dictionary<string, string>();
             ProcNameTable = new DataTable();
-            TableNameTable = new DataTable();
+
+            //Sets storedProcsQuery tableNameTable to check for non-existing tables that will show up from params like ExternalUniqueId
+            this.TableNameTable = TableNameTable;
             nonIdParamColumnTable = "";
 
         }
 
         //TODO: split logic for add, get and update stored procs
-        public void ParamaterNamesGet(DataTable parmsDataTable)
+        public void ParamaterNamesSet(DataTable parmsDataTable)
         {
             //uses class fileds to get param names like @filter_id_eq
 
@@ -34,14 +36,14 @@ namespace GetYourQuery.Core
 
             foreach (DataRow row in parmsDataTable.Rows)
             {
-                //For regular parameters I need to know data type to generate values
-                if (!row[parmName].ToString().Contains("Id"))
-                {
-                    ParamList.Add(row[parmName].ToString(), row[parmType].ToString());
-                }
-                else
+                if (row[parmName].ToString().Contains("Id"))
                 {
                     IdList.Add(row[parmName].ToString());
+                }
+                //For non-id parameters I need to know data type to generate values
+                else
+                {
+                    ParamList.Add(row[parmName].ToString(), row[parmType].ToString());
                 }
             }
         }
@@ -52,44 +54,49 @@ namespace GetYourQuery.Core
             return query;
         }
 
-        public virtual Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName)
+        public virtual Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName, string storedProcName = null)
         {
             var paramColumnTable = new Dictionary<string, ColumnTablePair>();
 
             foreach (var name in IdList)
             {
-                if (name.Contains("Id"))
+
+                if (name.Contains("ByUser"))
                 {
-                    if (name.Contains("ByUser"))
-                    {
-                        paramColumnTable.Add(name, new ColumnTablePair("UserId", "[core].[Users]"));
-                    }
-                    else
-                    {
-                        var tableName = name.Replace("@filter_", "")
-                                .Replace("_eq", "")
-                                .Replace("@", "")
-                                .Replace("Id", "") + "s";
-                        var columnName = (name.Replace("@filter_", "")
-                                        .Replace("_eq", "")
-                                        .Replace("@", "")
-                                        );
+                    paramColumnTable.Add(name, new ColumnTablePair("UserId", "[core].[Users]"));
+                }
+                else
+                {
+                    var tableName = TableNameGet(name);
+                    var columnName = ColumnNameGet(name);
 
-                        if (IsTableExists(tableName))
-                        {
-                            paramColumnTable.Add(name, new ColumnTablePair(columnName, $"[{schemaName}].[{tableName}]"));
-                        }
+                    if (IsTableExists(tableName))
+                    {
+                        paramColumnTable.Add(name, new ColumnTablePair(columnName, $"[{schemaName}].[{tableName}]"));
                     }
-
                 };
-
             }
 
             return paramColumnTable;
         }
 
+        public string TableNameGet(string name)
+        {
+            return name.Replace("@filter_", "")
+                       .Replace("_eq", "")
+                       .Replace("@", "")
+                       .Replace("Id", "") + "s";
+        }
+
+        public string ColumnNameGet(string name)
+        {
+            return name.Replace("@filter_", "")
+                       .Replace("_eq", "")
+                       .Replace("@", "");
+        }
+
         //TODO: Generate data for bit params. IsDeleted always 0. The rest might be random
-        public void ParametersDataGenerate()
+        public virtual void ParametersDataGenerate()
         {
             var random = new Random();
 
@@ -113,10 +120,10 @@ namespace GetYourQuery.Core
                         nonIdParamColumnTable += $" ,{item.Key} = {randomDouble}";
                         break;
                     case "int":
-                        nonIdParamColumnTable += $" ,{item.Key} = {random.Next(0, 100)}";
+                        nonIdParamColumnTable += $" ,{item.Key} = {random.Next(0, 10)}";
                         break;
                     case "nvarchar":
-                        var length = random.Next(0, 25);
+                        var length = random.Next(0, 10);
                         var randomString = new string(Enumerable.Repeat(CHARS, length)
                           .Select(s => s[random.Next(s.Length)]).ToArray());
                         nonIdParamColumnTable += $" ,{item.Key} = '{randomString}'";
@@ -126,7 +133,6 @@ namespace GetYourQuery.Core
                             nonIdParamColumnTable += $" ,{item.Key} = NULL";
                             break;
                         }
-
                 }
             }
         }

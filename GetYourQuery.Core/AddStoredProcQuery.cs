@@ -8,11 +8,11 @@ namespace GetYourQuery.Core
     {
         private List<string> excludeParameres = new List<string> { "@DeletedByUserId" };
 
-        public AddStoredProcQuery(DataTable TableNameTable) : base(TableNameTable)
+        public AddStoredProcQuery(DataTable TableNameTable, string storedProcName) : base(TableNameTable, storedProcName)
         {
         }
 
-        public override Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName, string storedProcName)
+        public override Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName)
         {
             var paramColumnTable = new Dictionary<string, ColumnTablePair>();
 

@@ -98,33 +98,33 @@ namespace GetYourQuery.UI
 
             var tablesTable = repository.TableNamesGet(schema);
 
-            var storedProcQuery = GetStoredProcQueryType(procType, tablesTable);
+            var storedProcQuery = GetStoredProcQueryType(procType, tablesTable, storedProcBox.Text);
 
             var parametersTable = repository.ParametersTableGet(storedProcedureName, schema);
 
             storedProcQuery.ParamaterNamesSet(parametersTable);
             //storedProcQuery.ParametersDataGenerate();
             
-            var dict = storedProcQuery.TableAndColumnNamesGet(schema, storedProcedureName);
+            var dict = storedProcQuery.TableAndColumnNamesGet(schema);
             var data = repository.IdParametersDataGet(dict);
 
             //TODO: add scroll bar to query text
-            queryTextBox.Text = storedProcQuery.QueryGet(schema, storedProcedureName, data);
+            queryTextBox.Text = storedProcQuery.QueryGet(schema, data);
 
         }
 
-        private IStoredProcQuery GetStoredProcQueryType(string procType, DataTable tablesTable)
+        private IStoredProcQuery GetStoredProcQueryType(string procType, DataTable tablesTable, string storedProcedureName)
         {
             switch(procType)
             {
                 case "Add":
-                    return new AddStoredProcQuery(tablesTable);
+                    return new AddStoredProcQuery(tablesTable, storedProcedureName);
                 case "Update":
-                    return new UpdateStoredProcQuery(tablesTable);
+                    return new UpdateStoredProcQuery(tablesTable, storedProcedureName);
                 case "Delete":
-                    return new DeleteStoredProcQuery(tablesTable);
+                    return new DeleteStoredProcQuery(tablesTable, storedProcedureName);
                 case "Get":
-                    return new GetStoredProcQuery(tablesTable);
+                    return new GetStoredProcQuery(tablesTable, storedProcedureName);
                 default:
                     {
                         throw new Exception("Type wasn't found");

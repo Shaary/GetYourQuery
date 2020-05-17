@@ -7,7 +7,7 @@ namespace GetYourQuery.Core
 {
     public class DeleteStoredProcQuery : StoredProcQuery, IStoredProcQuery
     {
-        public DeleteStoredProcQuery(DataTable TableNameTable) : base(TableNameTable)
+        public DeleteStoredProcQuery(DataTable TableNameTable, string storedProcName) : base(TableNameTable, storedProcName)
         {
         }
     }

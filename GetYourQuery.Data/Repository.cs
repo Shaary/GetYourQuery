@@ -150,9 +150,10 @@ namespace GetYourQuery.Core
             throw new System.NotImplementedException();
         }
 
-        public virtual string NonIdParametersDataGet(string paramNames)
+        public string NonIdParametersDataGet(string paramNames)
         {
-            //Function for GetRepository only
+            //Function for Get stored procs only
+
             return "";
         }
     }

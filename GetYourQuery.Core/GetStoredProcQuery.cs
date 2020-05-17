@@ -7,18 +7,18 @@ namespace GetYourQuery.Core
     public class GetStoredProcQuery : StoredProcQuery, IStoredProcQuery
     {
         private string paramNames = "";
-        public GetStoredProcQuery(DataTable TableNameTable) : base(TableNameTable)
+        public GetStoredProcQuery(DataTable TableNameTable, string storedProcName) : base(TableNameTable, storedProcName)
         {
         }
 
-        public override string QueryGet(string schemaName, string procedureName, string paramNameAndData)
+        public override string QueryGet(string schemaName, string paramNameAndData)
         {
-            var pkName = procedureName.Replace("usp_", "")
+            var pkName = storedProcName.Replace("usp_", "")
                                        .Replace("sGet", "") + "Id";
 
             var nonIdParamColumnTable = ParametersDataGenerate();
 
-            var query = $"exec [{schemaName}].[{procedureName}] {paramNameAndData.TrimStart(',', ' ').Replace(",", Environment.NewLine + ",")} {nonIdParamColumnTable.Replace(",", Environment.NewLine + ",")}";
+            var query = $"exec [{schemaName}].[{storedProcName}] {paramNameAndData.TrimStart(',', ' ').Replace(",", Environment.NewLine + ",")} {nonIdParamColumnTable.Replace(",", Environment.NewLine + ",")}";
             return query;
         }
 

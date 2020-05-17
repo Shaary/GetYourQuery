@@ -9,13 +9,13 @@ namespace GetYourQuery.Core
     {
         public void ParamaterNamesSet(DataTable parmsDataTable);
 
-        public string QueryGet(string schemaName, string procedureName, string paramNameAndData);
+        public string QueryGet(string schemaName, string paramNameAndData);
 
-        public Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName, string storedProcName = null);
+        public Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName);
 
         //public void ParametersDataGenerate();
 
-        public bool IsNameExists(string procName);
+        //public bool IsNameExists(string procName);
 
         public bool IsTableExists(string tableName);
     }

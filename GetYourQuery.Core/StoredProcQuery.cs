@@ -7,6 +7,8 @@ namespace GetYourQuery.Core
 {
     public class StoredProcQuery : IStoredProcQuery
     {
+        public readonly string storedProcName;
+
         public DataTable ProcNameTable { get; set; }
         public DataTable TableNameTable { get; set; }
         //Ids got from different tables
@@ -14,7 +16,7 @@ namespace GetYourQuery.Core
         //Non ids got from the same table
         public Dictionary<string, string> NonIdDict { get; }
 
-        public StoredProcQuery(DataTable TableNameTable)
+        public StoredProcQuery(DataTable TableNameTable, string storedProcName)
         {
             IdList = new List<string>();
             NonIdDict = new Dictionary<string, string>();
@@ -22,7 +24,7 @@ namespace GetYourQuery.Core
 
             //need it to check for non-existing tables that will show up from params like ExternalUniqueId
             this.TableNameTable = TableNameTable;
-
+            this.storedProcName = storedProcName;
         }
 
         //TODO: split logic for add, get and update stored procs
@@ -47,15 +49,15 @@ namespace GetYourQuery.Core
             }
         }
 
-        public virtual string QueryGet(string schemaName, string procedureName, string paramNameAndData)
+        public virtual string QueryGet(string schemaName, string paramNameAndData)
         {
             var nonIdParamColumnTable = ParametersDataGenerate();
 
-            var query = $"exec [{schemaName}].[{procedureName}] {paramNameAndData.TrimStart(',', ' ').Replace(",", Environment.NewLine + ",")} {nonIdParamColumnTable.Replace(",", Environment.NewLine + ",")}";
+            var query = $"exec [{schemaName}].[{storedProcName}] {paramNameAndData.TrimStart(',', ' ').Replace(",", Environment.NewLine + ",")} {nonIdParamColumnTable.Replace(",", Environment.NewLine + ",")}";
             return query;
         }
 
-        public virtual Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName, string storedProcName = null)
+        public virtual Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName)
         {
             var paramColumnTable = new Dictionary<string, ColumnTablePair>();
 
@@ -107,24 +109,24 @@ namespace GetYourQuery.Core
             return nonIdParamColumnTable;
         }
 
-        //Checks if entered value is a valid name
-        public bool IsNameExists(string procName)
-        {
-            DataColumn procedureDataColumn = ProcNameTable.Columns["ROUTINE_NAME"];
+        //Checks if entered value is a valid name. Used in a connsole app
+        //public bool IsNameExists(string procName)
+        //{
+        //    DataColumn procedureDataColumn = ProcNameTable.Columns["ROUTINE_NAME"];
 
-            if (procedureDataColumn != null)
-            {
-                foreach (DataRow row in ProcNameTable.Rows)
-                {
-                    var procedureName = row[procedureDataColumn].ToString();
-                    if (procedureName == procName)
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
+        //    if (procedureDataColumn != null)
+        //    {
+        //        foreach (DataRow row in ProcNameTable.Rows)
+        //        {
+        //            var storedProcName = row[procedureDataColumn].ToString();
+        //            if (storedProcName == procName)
+        //            {
+        //                return true;
+        //            }
+        //        }
+        //    }
+        //    return false;
+        //}
 
         public bool IsTableExists(string tableName)
         {

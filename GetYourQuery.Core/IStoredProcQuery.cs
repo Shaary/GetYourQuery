@@ -13,7 +13,7 @@ namespace GetYourQuery.Core
 
         public Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName, string storedProcName = null);
 
-        public void ParametersDataGenerate();
+        //public void ParametersDataGenerate();
 
         public bool IsNameExists(string procName);
 

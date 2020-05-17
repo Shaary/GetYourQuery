@@ -7,7 +7,7 @@ namespace GetYourQuery.Core
     public class Repository : IRepository
 
     {
-        private readonly string connString;
+        public readonly string connString;
 
         //TODO: for get stored procedures that have other tables ids create a pool of suitable ids to return data
         //example: for Equipment that has project id select equipment and project ids from project equipment table
@@ -34,7 +34,6 @@ namespace GetYourQuery.Core
             }
 
             return parmsDataTable;
-
         }
 
         public string IdParametersDataGet(Dictionary<string, ColumnTablePair> paramColumnTable)
@@ -65,7 +64,6 @@ namespace GetYourQuery.Core
                     {
                         nameValue += $" ,{name} = NULL";
                     }
-
                 }
             }
             finally
@@ -145,6 +143,17 @@ namespace GetYourQuery.Core
                 connection.Close();
             }
             return schemaList;
+        }
+
+        public string RelatedParametersDataGet()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public virtual string NonIdParametersDataGet(string paramNames)
+        {
+            //Function for GetRepository only
+            return "";
         }
     }
 }

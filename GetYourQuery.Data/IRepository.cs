@@ -12,5 +12,8 @@ namespace GetYourQuery.Core
         List<string> StoredProcedureNamesGet(string schema, string database, string procType);
         DataTable TableNamesGet(string schema);
         List<string> SchemaNamesGet();
+
+        string RelatedParametersDataGet();
+        string NonIdParametersDataGet(string paramNames);
     }
 }

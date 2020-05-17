@@ -103,9 +103,8 @@ namespace GetYourQuery.UI
             var parametersTable = repository.ParametersTableGet(storedProcedureName, schema);
 
             storedProcQuery.ParamaterNamesSet(parametersTable);
-            storedProcQuery.ParametersDataGenerate();
+            //storedProcQuery.ParametersDataGenerate();
             
-            //TODO: figure out why parent method is called when use ADD proc
             var dict = storedProcQuery.TableAndColumnNamesGet(schema, storedProcedureName);
             var data = repository.IdParametersDataGet(dict);
 

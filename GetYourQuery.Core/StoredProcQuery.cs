@@ -7,27 +7,26 @@ namespace GetYourQuery.Core
 {
     public class StoredProcQuery : IStoredProcQuery
     {
-        public const string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
         public DataTable ProcNameTable { get; set; }
         public DataTable TableNameTable { get; set; }
+        //Ids got from different tables
         public List<string> IdList { get; }
-        public Dictionary<string, string> ParamList { get; }
-        private string nonIdParamColumnTable;
+        //Non ids got from the same table
+        public Dictionary<string, string> NonIdDict { get; }
 
         public StoredProcQuery(DataTable TableNameTable)
         {
             IdList = new List<string>();
-            ParamList = new Dictionary<string, string>();
+            NonIdDict = new Dictionary<string, string>();
             ProcNameTable = new DataTable();
 
-            //Sets storedProcsQuery tableNameTable to check for non-existing tables that will show up from params like ExternalUniqueId
+            //need it to check for non-existing tables that will show up from params like ExternalUniqueId
             this.TableNameTable = TableNameTable;
-            nonIdParamColumnTable = "";
 
         }
 
         //TODO: split logic for add, get and update stored procs
-        public void ParamaterNamesSet(DataTable parmsDataTable)
+        public virtual void ParamaterNamesSet(DataTable parmsDataTable)
         {
             //uses class fileds to get param names like @filter_id_eq
 
@@ -40,16 +39,18 @@ namespace GetYourQuery.Core
                 {
                     IdList.Add(row[parmName].ToString());
                 }
-                //For non-id parameters I need to know data type to generate values
+                //For non-id parameters I need to know data type to generate values for add and update
                 else
                 {
-                    ParamList.Add(row[parmName].ToString(), row[parmType].ToString());
+                    NonIdDict.Add(row[parmName].ToString(), row[parmType].ToString());
                 }
             }
         }
 
-        public string QueryGet(string schemaName, string procedureName, string paramNameAndData)
+        public virtual string QueryGet(string schemaName, string procedureName, string paramNameAndData)
         {
+            var nonIdParamColumnTable = ParametersDataGenerate();
+
             var query = $"exec [{schemaName}].[{procedureName}] {paramNameAndData.TrimStart(',', ' ').Replace(",", Environment.NewLine + ",")} {nonIdParamColumnTable.Replace(",", Environment.NewLine + ",")}";
             return query;
         }
@@ -95,46 +96,15 @@ namespace GetYourQuery.Core
                        .Replace("@", "");
         }
 
-        //TODO: Generate data for bit params. IsDeleted always 0. The rest might be random
-        public virtual void ParametersDataGenerate()
+        public string ParametersDataGenerate()
         {
-            var random = new Random();
+            var nonIdParamColumnTable = "";
 
-            foreach (var item in ParamList)
+            foreach (var item in NonIdDict)
             {
-                Console.WriteLine(item.Value);
-                switch (item.Value)
-                {
-                    case "bit":
-                        if (item.Key != "IsDeleted")
-                        {
-                            nonIdParamColumnTable += $" ,{item.Key} = {random.Next(0, 1)}";
-                        }
-                        else
-                        {
-                            nonIdParamColumnTable += $" ,{item.Key} = 0";
-                        }
-                        break;
-                    case "decimal":
-                        var randomDouble = random.Next(-4, 4) + (0.6689);
-                        nonIdParamColumnTable += $" ,{item.Key} = {randomDouble}";
-                        break;
-                    case "int":
-                        nonIdParamColumnTable += $" ,{item.Key} = {random.Next(0, 10)}";
-                        break;
-                    case "nvarchar":
-                        var length = random.Next(0, 10);
-                        var randomString = new string(Enumerable.Repeat(CHARS, length)
-                          .Select(s => s[random.Next(s.Length)]).ToArray());
-                        nonIdParamColumnTable += $" ,{item.Key} = '{randomString}'";
-                        break;
-                    default:
-                        {
-                            nonIdParamColumnTable += $" ,{item.Key} = NULL";
-                            break;
-                        }
-                }
+                nonIdParamColumnTable += DataGenerator.GenerateData(item.Key, item.Value);
             }
+            return nonIdParamColumnTable;
         }
 
         //Checks if entered value is a valid name

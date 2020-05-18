@@ -3,12 +3,11 @@ using System.Data;
 
 namespace GetYourQuery.Core
 {
-    //TODO: Create list of ignored parameter. Check if name in it. like var matchingvalues = myList.Where(stringToCheck => stringToCheck.Contains(myString));
     public class AddStoredProcQuery : StoredProcQuery
     {
         private List<string> excludeParameres = new List<string> { "@DeletedByUserId" };
 
-        public AddStoredProcQuery(DataTable TableNameTable, string storedProcName) : base(TableNameTable, storedProcName)
+        public AddStoredProcQuery(DataTable TableNameTable, string storedProcName, string schemaName) : base(TableNameTable, storedProcName, schemaName)
         {
         }
 

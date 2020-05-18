@@ -1,4 +1,5 @@
 ﻿
+using System;
 using System.Collections.Generic;
 using System.Data;
 
@@ -14,6 +15,8 @@ namespace GetYourQuery.Core
         List<string> SchemaNamesGet();
 
         string RelatedParametersDataGet();
-        string NonIdParametersDataGet(string paramNames);
+        string NonIdParametersDataGet(List<string> paramNames, string schema, string tableName, string pkName, string pk);
+        string PrimaryKeyGet(string schema, string tableName, string pkName);
+        string DateLastUpdatedGet(string schema, string tableName, string pkName, string pk);
     }
 }

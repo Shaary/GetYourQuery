@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 
@@ -7,14 +8,13 @@ namespace GetYourQuery.Core
     public class Repository : IRepository
 
     {
-        public readonly string connString;
+        public readonly string connString = "Data Source=(localdb)\\MSSQLLocalDB; Initial Catalog=AmazingDb; Integrated Security=True;";
 
         //TODO: for get stored procedures that have other tables ids create a pool of suitable ids to return data
         //example: for Equipment that has project id select equipment and project ids from project equipment table
 
-        public Repository(string connString)
+        public Repository()
         {
-            this.connString = connString;
         }
 
         public DataTable ParametersTableGet(string procedure, string schema)
@@ -150,11 +150,105 @@ namespace GetYourQuery.Core
             throw new System.NotImplementedException();
         }
 
-        public string NonIdParametersDataGet(string paramNames)
+        public string NonIdParametersDataGet(List<string> paramNames, string schema, string tableName, string pkName, string pk)
         {
             //Function for Get stored procs only
 
-            return "";
+            var nonIdParams = "";
+
+            SqlConnection connection = new SqlConnection(connString);
+
+            try
+            {
+                connection.Open();
+
+                var query = $"SELECT TOP(1) {string.Join(",", paramNames)} FROM [{schema}].{tableName} WHERE {pkName} = '{pk}' and IsDeleted = 0 ORDER BY DtLastUpdated DESC";
+
+                var cmd = new SqlCommand(query, connection);
+
+                using SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    foreach (var par in paramNames)
+                    {
+                        if (reader[par].ToString() == "False")
+                        {
+                            nonIdParams += $" ,@filter_{par}_eq = 0";
+                        }
+                        else if (reader[par].ToString() == "True")
+                        {
+                            nonIdParams += $" ,@filter_{par}_eq = 1";
+                        }
+                        else
+                        {
+                            nonIdParams += $" ,@filter_{par}_eq = {reader[par]}";
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                connection.Close();
+            }
+
+            return nonIdParams;
+        }
+
+        public string PrimaryKeyGet(string schema, string tableName, string pkName)
+        {
+            var pkGuid = default(Guid).ToString();
+
+            SqlConnection connection = new SqlConnection(connString);
+
+            try
+            {
+                connection.Open();
+
+                var query = $"SELECT TOP(1) {pkName} FROM [{schema}].{tableName} WHERE IsDeleted = 0";
+
+                var cmd = new SqlCommand(query, connection);
+
+                using SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    pkGuid = reader[pkName].ToString();
+                }
+            }
+            finally
+            {
+                connection.Close();
+            }
+
+            return pkGuid;
+        }
+
+        //Need this one for update and delete stored procs
+        public string DateLastUpdatedGet(string schema, string tableName, string pkName, string pk)
+        {
+            var dtLastUpdated = "";
+
+            SqlConnection connection = new SqlConnection(connString);
+
+            try
+            {
+                connection.Open();
+
+                var query = $"SELECT TOP(1) DtLastUpdated FROM [{schema}].{tableName} WHERE {pkName} = '{pk}' and IsDeleted = 0 ORDER BY DtLastUpdated DESC";
+
+                var cmd = new SqlCommand(query, connection);
+
+                using SqlDataReader reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    dtLastUpdated = reader[pkName].ToString();
+                }
+            }
+            finally
+            {
+                connection.Close();
+            }
+
+            return dtLastUpdated;
         }
     }
 }

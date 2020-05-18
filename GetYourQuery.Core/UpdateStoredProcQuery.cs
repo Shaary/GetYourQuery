@@ -7,7 +7,7 @@ namespace GetYourQuery.Core
 {
     public class UpdateStoredProcQuery : StoredProcQuery, IStoredProcQuery
     {
-        public UpdateStoredProcQuery(DataTable TableNameTable, string storedProcName) : base(TableNameTable, storedProcName)
+        public UpdateStoredProcQuery(DataTable TableNameTable, string storedProcName, string schemaName) : base(TableNameTable, storedProcName, schemaName)
         {
         }
     }

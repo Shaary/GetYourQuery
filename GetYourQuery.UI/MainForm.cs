@@ -14,14 +14,12 @@ namespace GetYourQuery.UI
         private string procType;
         private string storedProcedureName;
         private string databaseName;
-        private string connectionString;
 
         public MainForm()
         {
             InitializeComponent();
-            this.connectionString = "Data Source=(localdb)\\MSSQLLocalDB; Initial Catalog=AmazingDb; Integrated Security=True;";
 
-            this.repository = new Repository(connectionString);
+            this.repository = new Repository();
             this.procType = "";
             this.storedProcedureName = "";
             this.databaseName = "AmazingDb";
@@ -40,6 +38,7 @@ namespace GetYourQuery.UI
         {
             storedProcBox.DataSource = null;
             storedProcBox.Items.Clear();
+            queryTextBox.Clear();
 
             var storedProcNames = repository.StoredProcedureNamesGet(schema, database, procType);
             storedProcBox.DataSource = storedProcNames;
@@ -66,6 +65,7 @@ namespace GetYourQuery.UI
 
         private void StoredProcedureComboBox_SelectedValueChanged(object sender, EventArgs e)
         {
+            queryTextBox.Clear();
             ComboBox comboBox = sender as ComboBox;
             storedProcedureName = comboBox.Text.ToString();
 
@@ -94,37 +94,45 @@ namespace GetYourQuery.UI
         {
             var schema = GetSelectedSchema(schemaBox);
 
-            var repository = new Repository(connectionString);
-
             var tablesTable = repository.TableNamesGet(schema);
 
-            var storedProcQuery = GetStoredProcQueryType(procType, tablesTable, storedProcBox.Text);
+            var storedProcQuery = GetStoredProcQueryType(procType, tablesTable, storedProcBox.Text, schema);
 
-            var parametersTable = repository.ParametersTableGet(storedProcedureName, schema);
+            var tableName = StoredProcQuery.TableNameGet(storedProcBox.Text);
 
-            storedProcQuery.ParamaterNamesSet(parametersTable);
-            //storedProcQuery.ParametersDataGenerate();
+            if (storedProcQuery.IsTableExists(tableName))
+            {
+                var parametersTable = repository.ParametersTableGet(storedProcedureName, schema);
+
+                storedProcQuery.ParamaterNamesSet(parametersTable);
+                //storedProcQuery.ParametersDataGenerate();
+
+                var dict = storedProcQuery.TableAndColumnNamesGet(schema);
+                var data = repository.IdParametersDataGet(dict);
+
+                //TODO: add scroll bar to query text
+                queryTextBox.Text = storedProcQuery.QueryGet(schema, data);
+            }
+            else
+            {
+                queryTextBox.Text = "Sorry, I couldn't find underlying table";
+            }
             
-            var dict = storedProcQuery.TableAndColumnNamesGet(schema);
-            var data = repository.IdParametersDataGet(dict);
-
-            //TODO: add scroll bar to query text
-            queryTextBox.Text = storedProcQuery.QueryGet(schema, data);
 
         }
 
-        private IStoredProcQuery GetStoredProcQueryType(string procType, DataTable tablesTable, string storedProcedureName)
+        private IStoredProcQuery GetStoredProcQueryType(string procType, DataTable tablesTable, string storedProcedureName, string schemaName)
         {
             switch(procType)
             {
                 case "Add":
-                    return new AddStoredProcQuery(tablesTable, storedProcedureName);
+                    return new AddStoredProcQuery(tablesTable, storedProcedureName, schemaName);
                 case "Update":
-                    return new UpdateStoredProcQuery(tablesTable, storedProcedureName);
+                    return new UpdateStoredProcQuery(tablesTable, storedProcedureName, schemaName);
                 case "Delete":
-                    return new DeleteStoredProcQuery(tablesTable, storedProcedureName);
+                    return new DeleteStoredProcQuery(tablesTable, storedProcedureName, schemaName);
                 case "Get":
-                    return new GetStoredProcQuery(tablesTable, storedProcedureName);
+                    return new GetStoredProcQuery(tablesTable, storedProcedureName, schemaName);
                 default:
                     {
                         throw new Exception("Type wasn't found");

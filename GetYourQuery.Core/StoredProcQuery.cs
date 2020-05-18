@@ -8,15 +8,17 @@ namespace GetYourQuery.Core
     public class StoredProcQuery : IStoredProcQuery
     {
         public readonly string storedProcName;
+        public readonly string pkName;
+        public readonly string schemaName;
+        public readonly string tableName;
 
         public DataTable ProcNameTable { get; set; }
         public DataTable TableNameTable { get; set; }
-        //Ids got from different tables
-        public List<string> IdList { get; }
-        //Non ids got from the same table
-        public Dictionary<string, string> NonIdDict { get; }
+        public List<string> IdList { get; } //Ids got from different tables
+        public Dictionary<string, string> NonIdDict { get; }  //Non ids got from the same table
+        public string PkId { get; set; }
 
-        public StoredProcQuery(DataTable TableNameTable, string storedProcName)
+        public StoredProcQuery(DataTable TableNameTable, string storedProcName, string schemaName)
         {
             IdList = new List<string>();
             NonIdDict = new Dictionary<string, string>();
@@ -25,13 +27,14 @@ namespace GetYourQuery.Core
             //need it to check for non-existing tables that will show up from params like ExternalUniqueId
             this.TableNameTable = TableNameTable;
             this.storedProcName = storedProcName;
+            this.pkName = PkNameGet(storedProcName);
+            this.schemaName = schemaName;
+            this.tableName = TableNameGet(storedProcName);
         }
 
         //TODO: split logic for add, get and update stored procs
         public virtual void ParamaterNamesSet(DataTable parmsDataTable)
         {
-            //uses class fileds to get param names like @filter_id_eq
-
             DataColumn parmName = parmsDataTable.Columns["PARAMETER_NAME"];
             DataColumn parmType = parmsDataTable.Columns["DATA_TYPE"];
 
@@ -83,22 +86,7 @@ namespace GetYourQuery.Core
             return paramColumnTable;
         }
 
-        public string TableNameGet(string name)
-        {
-            return name.Replace("@filter_", "")
-                       .Replace("_eq", "")
-                       .Replace("@", "")
-                       .Replace("Id", "") + "s";
-        }
-
-        public string ColumnNameGet(string name)
-        {
-            return name.Replace("@filter_", "")
-                       .Replace("_eq", "")
-                       .Replace("@", "");
-        }
-
-        public string ParametersDataGenerate()
+        private string ParametersDataGenerate()
         {
             var nonIdParamColumnTable = "";
 
@@ -109,25 +97,6 @@ namespace GetYourQuery.Core
             return nonIdParamColumnTable;
         }
 
-        //Checks if entered value is a valid name. Used in a connsole app
-        //public bool IsNameExists(string procName)
-        //{
-        //    DataColumn procedureDataColumn = ProcNameTable.Columns["ROUTINE_NAME"];
-
-        //    if (procedureDataColumn != null)
-        //    {
-        //        foreach (DataRow row in ProcNameTable.Rows)
-        //        {
-        //            var storedProcName = row[procedureDataColumn].ToString();
-        //            if (storedProcName == procName)
-        //            {
-        //                return true;
-        //            }
-        //        }
-        //    }
-        //    return false;
-        //}
-
         public bool IsTableExists(string tableName)
         {
             DataColumn tableDataColumn = TableNameTable.Columns["TABLE_NAME"];
@@ -137,7 +106,6 @@ namespace GetYourQuery.Core
                 foreach (DataRow row in TableNameTable.Rows)
                 {
                     var tabName = row[tableDataColumn].ToString();
-                    //Console.WriteLine(tabName);
                     if (tabName == tableName)
                     {
                         return true;
@@ -146,5 +114,55 @@ namespace GetYourQuery.Core
             }
             return false;
         }
+
+        public static string TableNameGet(string name)
+        {
+            var tableName = name.Replace("@filter_", "")
+                       .Replace("_eq", "")
+                       .Replace("@", "")
+                       .Replace("Id", "")
+                       .Replace("usp_", "")
+                       .Replace("sGet", "")
+                       .Replace("sAdd", "")
+                       .Replace("sDelete", "")
+                       .Replace("Stats", "")
+                       .Replace("sUpdate", "");
+
+            if (tableName.EndsWith("y"))
+            {
+                tableName = tableName.Replace("y", "ie");
+            }
+
+            tableName += "s";
+
+            return tableName;
+        }
+
+        public string ColumnNameGet(string name)
+        {
+            return name.Replace("@filter_", "")
+                       .Replace("_eq", "")
+                       .Replace("@", "");
+        }
+
+        public string PkNameGet(string name)
+        {
+            var pkName = name.Replace("usp_", "")
+                       .Replace("sGet", "")
+                       .Replace("sAdd", "")
+                       .Replace("sDelete", "")
+                       .Replace("Stats", "")
+                       .Replace("sUpdate", "");
+            //Trims names like companies, facilities
+            if (pkName.EndsWith("ie"))
+            {
+                pkName = pkName.Replace("ie", "y");
+            }
+            
+            pkName += "Id";
+
+            return pkName;
+        }
+
     }
 }

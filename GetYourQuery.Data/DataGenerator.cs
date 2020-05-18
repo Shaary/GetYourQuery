@@ -98,5 +98,17 @@ namespace GetYourQuery.Core
 
             return nonIdParamColumnTable;
         }
+
+        public static string PkIdGet(string schema, string tableName, string pkName)
+        {
+            var repo = new Repository();
+            return repo.PrimaryKeyGet(schema, tableName, pkName);
+        }
+
+        public static string DataGet(List<string> paramNames, string schema, string tableName, string pkName, string pk)
+        {
+            var repo = new Repository();
+            return repo.NonIdParametersDataGet(paramNames, schema, tableName, pkName, pk);
+        }
     }
 }

@@ -1,22 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
-using System.Net.WebSockets;
 
 namespace GetYourQuery.Core
 {
     public class GetStoredProcQuery : StoredProcQuery, IStoredProcQuery
     {
-        private string paramNames = "";
-        public GetStoredProcQuery(DataTable TableNameTable, string storedProcName) : base(TableNameTable, storedProcName)
+        private List<string> paramNames;
+        public GetStoredProcQuery(DataTable TableNameTable, string storedProcName, string schemaName) : base(TableNameTable, storedProcName, schemaName)
         {
+            paramNames = new List<string>();
         }
 
         public override string QueryGet(string schemaName, string paramNameAndData)
         {
-            var pkName = storedProcName.Replace("usp_", "")
-                                       .Replace("sGet", "") + "Id";
-
-            var nonIdParamColumnTable = ParametersDataGenerate();
+            var nonIdParamColumnTable = ParametersDataGet();
 
             var query = $"exec [{schemaName}].[{storedProcName}] {paramNameAndData.TrimStart(',', ' ').Replace(",", Environment.NewLine + ",")} {nonIdParamColumnTable.Replace(",", Environment.NewLine + ",")}";
             return query;
@@ -34,12 +32,17 @@ namespace GetYourQuery.Core
                 {
                     IdList.Add(row[parmName].ToString());
                 }
-                //For non-id parameters I need to know data type to generate values for add and update
                 else
                 {
-                    this.paramNames += row[parmName].ToString();
+                    this.paramNames.Add(ColumnNameGet(row[parmName].ToString()));
                 }
             }
+        }
+
+        private string ParametersDataGet()
+        {
+            PkId = DataGenerator.PkIdGet(schemaName, tableName, pkName);
+            return DataGenerator.DataGet(paramNames, schemaName, tableName, pkName, PkId); 
         }
 
     }

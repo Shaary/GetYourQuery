@@ -1,20 +1,105 @@
-﻿using System;
+﻿using GetYourQuery.Core;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 
-namespace GetYourQuery.Core
+namespace GetYourQuery.Data
 {
     public class Repository : IRepository
 
     {
-        public readonly string connString = "Data Source=(localdb)\\MSSQLLocalDB; Initial Catalog=AmazingDb; Integrated Security=True;";
+        public readonly string connString;
+
+        public List<string> SchemaList { get; set; }
+        public DataTable ParametersDataTable { get; set; }
+        public DataTable TableNames { get; set; }
+        public List<string> IdList { get; set; }
+        public Dictionary<string, string> NonIdDict { get; set; }
 
         //TODO: for get stored procedures that have other tables ids create a pool of suitable ids to return data
         //example: for Equipment that has project id select equipment and project ids from project equipment table
 
-        public Repository()
+        public Repository(string connString)
         {
+            this.connString = connString;
+            SchemaList = SchemaNamesGet();
+            TableNames = TableNamesGet();
+
+            IdList = new List<string>();
+            NonIdDict = new Dictionary<string, string>();
+        }
+
+        public string DataGet(string procedure, string schema, string procType)
+        {
+            this.ParametersDataTable = ParametersTableGet(procedure, schema);
+            ParamaterNamesSet(this.ParametersDataTable);
+
+            var data = TableAndColumnNamesGet(schema);
+            //TODO: return different non id params based on the type
+            string nonIdParams;
+
+            if (procType == "Get")
+            {
+                var tableName = NameModifier.TableNameGet(procedure);
+                var pkName = NameModifier.PkNameGet(procedure);
+                var pk = PrimaryKeyGet(schema, tableName, pkName);
+
+                nonIdParams = NonIdParametersDataGet(NonIdDict, schema, tableName, pkName, pk);
+            }
+            else
+            {
+                nonIdParams = ParametersDataGet(NonIdDict);
+            }
+            var idParams = IdParametersDataGet(data);
+
+            Clear();
+
+            return idParams + nonIdParams;
+        }
+
+        public virtual void ParamaterNamesSet(DataTable parmsDataTable)
+        {
+            DataColumn parmName = parmsDataTable.Columns["PARAMETER_NAME"];
+            DataColumn parmType = parmsDataTable.Columns["DATA_TYPE"];
+
+            foreach (DataRow row in parmsDataTable.Rows)
+            {
+                if (row[parmName].ToString().Contains("Id"))
+                {
+                    IdList.Add(row[parmName].ToString());
+                }
+                //For non-id parameters I need to know data type to generate values for add and update
+                else
+                {
+                    NonIdDict.Add(row[parmName].ToString(), row[parmType].ToString());
+                }
+            }
+        }
+        public virtual Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schema)
+        {
+            var paramColumnTable = new Dictionary<string, ColumnTablePair>();
+
+            foreach (var name in IdList)
+            {
+
+                if (name.Contains("ByUser"))
+                {
+                    paramColumnTable.Add(name, new ColumnTablePair("UserId", "[core].[Users]"));
+                }
+                else
+                {
+                    var tableName = NameModifier.TableNameGet(name);
+                    var columnName = NameModifier.ColumnNameGet(name);
+
+                    if (IsTableExists(tableName, schema))
+                    {
+                        paramColumnTable.Add(name, new ColumnTablePair(columnName, $"[{schema}].[{tableName}]"));
+                    }
+                };
+            }
+
+            return paramColumnTable;
         }
 
         public DataTable ParametersTableGet(string procedure, string schema)
@@ -100,7 +185,7 @@ namespace GetYourQuery.Core
             return storedProcList;
         }
 
-        public DataTable TableNamesGet(string schema)
+        public DataTable TableNamesGet()
         {
             DataTable dataTable = new DataTable();
             SqlConnection connection = new SqlConnection(connString);
@@ -109,7 +194,7 @@ namespace GetYourQuery.Core
             {
                 connection.Open();
 
-                dataTable = connection.GetSchema("Tables", new string[] { null, schema });
+                dataTable = connection.GetSchema("Tables", new string[] { null, null });
             }
             finally
             {
@@ -150,7 +235,7 @@ namespace GetYourQuery.Core
             throw new System.NotImplementedException();
         }
 
-        public string NonIdParametersDataGet(List<string> paramNames, string schema, string tableName, string pkName, string pk)
+        public string NonIdParametersDataGet(Dictionary<string, string> nonIdDict, string schema, string tableName, string pkName, string pk)
         {
             //Function for Get stored procs only
 
@@ -161,6 +246,9 @@ namespace GetYourQuery.Core
             try
             {
                 connection.Open();
+
+                var paramNames = NameModifier.ColumnNameGet(nonIdDict);
+
 
                 var query = $"SELECT TOP(1) {string.Join(",", paramNames)} FROM [{schema}].{tableName} WHERE {pkName} = '{pk}' and IsDeleted = 0 ORDER BY DtLastUpdated DESC";
 
@@ -194,9 +282,10 @@ namespace GetYourQuery.Core
             return nonIdParams;
         }
 
+        //Needed for update, delete, get
         public string PrimaryKeyGet(string schema, string tableName, string pkName)
         {
-            var pkGuid = default(Guid).ToString();
+            var pkId = default(Guid).ToString();
 
             SqlConnection connection = new SqlConnection(connString);
 
@@ -211,7 +300,7 @@ namespace GetYourQuery.Core
                 using SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    pkGuid = reader[pkName].ToString();
+                    pkId = reader[pkName].ToString();
                 }
             }
             finally
@@ -219,10 +308,10 @@ namespace GetYourQuery.Core
                 connection.Close();
             }
 
-            return pkGuid;
+            return pkId;
         }
 
-        //Need this one for update and delete stored procs
+        //Need this one for update and delete stored procs. Concurrency check
         public string DateLastUpdatedGet(string schema, string tableName, string pkName, string pk)
         {
             var dtLastUpdated = "";
@@ -249,6 +338,43 @@ namespace GetYourQuery.Core
             }
 
             return dtLastUpdated;
+        }
+
+        public virtual string ParametersDataGet(Dictionary<string, string> NonIdDict)
+        {
+            var nonIdParamColumnTable = "";
+
+            foreach (var item in NonIdDict)
+            {
+                nonIdParamColumnTable += DataGenerator.GenerateData(item.Key, item.Value);
+            }
+            return nonIdParamColumnTable;
+        }
+
+        public bool IsTableExists(string tableName, string schema)
+        {
+            DataColumn tableDataColumn = TableNames.Columns["TABLE_NAME"];
+            //TODO: find how to exclude schema
+
+            if (tableDataColumn != null)
+            {
+                foreach (DataRow row in TableNames.Rows)
+                {
+                    var tabName = row[tableDataColumn].ToString();
+                    if (tabName == tableName)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public void Clear()
+        {
+            NonIdDict.Clear();
+            IdList.Clear();
+            ParametersDataTable.Clear();
         }
     }
 }

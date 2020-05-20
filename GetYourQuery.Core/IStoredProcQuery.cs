@@ -9,7 +9,7 @@ namespace GetYourQuery.Core
     {
         public void ParamaterNamesSet(DataTable parmsDataTable);
 
-        public string QueryGet(string schemaName, string paramNameAndData);
+        public string QueryGet(string schemaName, string storedProcName, string paramNameAndData);
 
         public Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schemaName);
 

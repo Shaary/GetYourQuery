@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace GetYourQuery.Core
 {
-    public class StoredProcQuery : IStoredProcQuery
+    public class StoredProcQuery 
     {
         public readonly string storedProcName;
         public readonly string pkName;
@@ -18,18 +18,18 @@ namespace GetYourQuery.Core
         public Dictionary<string, string> NonIdDict { get; }  //Non ids got from the same table
         public string PkId { get; set; }
 
-        public StoredProcQuery(DataTable TableNameTable, string storedProcName, string schemaName)
+        public StoredProcQuery()
         {
-            IdList = new List<string>();
-            NonIdDict = new Dictionary<string, string>();
-            ProcNameTable = new DataTable();
+            //IdList = new List<string>();
+            //NonIdDict = new Dictionary<string, string>();
+            //ProcNameTable = new DataTable();
 
-            //need it to check for non-existing tables that will show up from params like ExternalUniqueId
-            this.TableNameTable = TableNameTable;
-            this.storedProcName = storedProcName;
-            this.pkName = PkNameGet(storedProcName);
-            this.schemaName = schemaName;
-            this.tableName = TableNameGet(storedProcName);
+            ////need it to check for non-existing tables that will show up from params like ExternalUniqueId
+            //this.TableNameTable = TableNameTable;
+            //this.storedProcName = storedProcName;
+            //this.pkName = PkNameGet(storedProcName);
+            //this.schemaName = schemaName;
+            //this.tableName = TableNameGet(storedProcName);
         }
 
         //TODO: split logic for add, get and update stored procs
@@ -52,11 +52,9 @@ namespace GetYourQuery.Core
             }
         }
 
-        public virtual string QueryGet(string schemaName, string paramNameAndData)
+        public virtual string QueryGet(string schemaName, string storedProcName, string paramNameAndData)
         {
-            var nonIdParamColumnTable = ParametersDataGenerate();
-
-            var query = $"exec [{schemaName}].[{storedProcName}] {paramNameAndData.TrimStart(',', ' ').Replace(",", Environment.NewLine + ",")} {nonIdParamColumnTable.Replace(",", Environment.NewLine + ",")}";
+            var query = $"exec [{schemaName}].[{storedProcName}] {paramNameAndData.TrimStart(',', ' ').Replace(",", Environment.NewLine + ",")}";
             return query;
         }
 
@@ -84,17 +82,6 @@ namespace GetYourQuery.Core
             }
 
             return paramColumnTable;
-        }
-
-        private string ParametersDataGenerate()
-        {
-            var nonIdParamColumnTable = "";
-
-            foreach (var item in NonIdDict)
-            {
-                nonIdParamColumnTable += DataGenerator.GenerateData(item.Key, item.Value);
-            }
-            return nonIdParamColumnTable;
         }
 
         public bool IsTableExists(string tableName)

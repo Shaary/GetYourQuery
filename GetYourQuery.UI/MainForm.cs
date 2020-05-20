@@ -1,9 +1,8 @@
 ﻿using GetYourQuery.Core;
+using GetYourQuery.Data;
 using System;
+using System.Data.SqlClient;
 using System.Windows.Forms;
-using System.Linq;
-using System.ComponentModel;
-using System.Data;
 
 namespace GetYourQuery.UI
 {
@@ -19,10 +18,15 @@ namespace GetYourQuery.UI
         {
             InitializeComponent();
 
-            this.repository = new Repository();
-            this.procType = "";
-            this.storedProcedureName = "";
-            this.databaseName = "AmazingDb";
+            //var connectionString = "Data Source=(localdb)\\MSSQLLocalDB; Initial Catalog=AmazingDb; Integrated Security=True;";
+
+            var stringBuilder = new SqlConnectionStringBuilder(System.Configuration.ConfigurationManager
+                                        .ConnectionStrings["unify"].ConnectionString);
+
+            var connectionString = stringBuilder.ConnectionString;
+
+            this.repository = new Repository(connectionString);
+            this.databaseName = stringBuilder.InitialCatalog;
         }
 
         private void LoadShemaBox(ComboBox schemaBox)
@@ -30,8 +34,7 @@ namespace GetYourQuery.UI
             schemaBox.DataSource = null;
             schemaBox.Items.Clear();
 
-            var schemaNames = repository.SchemaNamesGet();
-            schemaBox.DataSource = schemaNames;
+            schemaBox.DataSource = repository.SchemaList;
         }
 
         private void LoadStoreProcBox(ComboBox storedProcBox, string schema, string database, string procType)
@@ -93,51 +96,44 @@ namespace GetYourQuery.UI
         private void FindButton_Click(object sender, EventArgs e)
         {
             var schema = GetSelectedSchema(schemaBox);
+            var storedProc = storedProcBox.Text;
 
-            var tablesTable = repository.TableNamesGet(schema);
+            var storedProcQuery = new StoredProcQuery();
 
-            var storedProcQuery = GetStoredProcQueryType(procType, tablesTable, storedProcBox.Text, schema);
+            var tableName = NameModifier.TableNameGet(storedProc);
 
-            var tableName = StoredProcQuery.TableNameGet(storedProcBox.Text);
-
-            if (storedProcQuery.IsTableExists(tableName))
+            if (repository.IsTableExists(tableName, schema))
             {
-                var parametersTable = repository.ParametersTableGet(storedProcedureName, schema);
-
-                storedProcQuery.ParamaterNamesSet(parametersTable);
-                //storedProcQuery.ParametersDataGenerate();
-
-                var dict = storedProcQuery.TableAndColumnNamesGet(schema);
-                var data = repository.IdParametersDataGet(dict);
+                var data = repository.DataGet(storedProc, schema, procType);
 
                 //TODO: add scroll bar to query text
-                queryTextBox.Text = storedProcQuery.QueryGet(schema, data);
+                queryTextBox.Text = storedProcQuery.QueryGet(schema, storedProc, data);
             }
             else
             {
                 queryTextBox.Text = "Sorry, I couldn't find underlying table";
             }
-            
+
 
         }
 
-        private IStoredProcQuery GetStoredProcQueryType(string procType, DataTable tablesTable, string storedProcedureName, string schemaName)
-        {
-            switch(procType)
-            {
-                case "Add":
-                    return new AddStoredProcQuery(tablesTable, storedProcedureName, schemaName);
-                case "Update":
-                    return new UpdateStoredProcQuery(tablesTable, storedProcedureName, schemaName);
-                case "Delete":
-                    return new DeleteStoredProcQuery(tablesTable, storedProcedureName, schemaName);
-                case "Get":
-                    return new GetStoredProcQuery(tablesTable, storedProcedureName, schemaName);
-                default:
-                    {
-                        throw new Exception("Type wasn't found");
-                    }
-            }
-        }
+        //private IStoredProcQuery GetStoredProcQueryType(string procType, DataTable tablesTable, string storedProcedureName, string schemaName)
+        //{
+        //    switch(procType)
+        //    {
+        //        case "Add":
+        //            return new AddStoredProcQuery(tablesTable, storedProcedureName, schemaName);
+        //        case "Update":
+        //            return new UpdateStoredProcQuery(tablesTable, storedProcedureName, schemaName);
+        //        case "Delete":
+        //            return new DeleteStoredProcQuery(tablesTable, storedProcedureName, schemaName);
+        //        case "Get":
+        //            return new GetStoredProcQuery(tablesTable, storedProcedureName, schemaName);
+        //        default:
+        //            {
+        //                throw new Exception("Type wasn't found");
+        //            }
+        //    }
+        //}
     }
 }

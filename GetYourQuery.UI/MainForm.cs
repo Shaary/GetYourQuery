@@ -13,12 +13,11 @@ namespace GetYourQuery.UI
         private string procType;
         private string storedProcedureName;
         private string databaseName;
+        private string server;
 
         public MainForm()
         {
             InitializeComponent();
-
-            //var connectionString = "Data Source=(localdb)\\MSSQLLocalDB; Initial Catalog=AmazingDb; Integrated Security=True;";
 
             var stringBuilder = new SqlConnectionStringBuilder(System.Configuration.ConfigurationManager
                                         .ConnectionStrings["unify"].ConnectionString);
@@ -27,6 +26,7 @@ namespace GetYourQuery.UI
 
             this.repository = new Repository(connectionString);
             this.databaseName = stringBuilder.InitialCatalog;
+            this.server = stringBuilder.DataSource;
         }
 
         private void LoadShemaBox(ComboBox schemaBox)
@@ -50,6 +50,13 @@ namespace GetYourQuery.UI
         private void MainForm_Load(object sender, EventArgs e)
         {
             ReloadDataFields();
+            LoadLabelNames();
+        }
+
+        private void LoadLabelNames()
+        {
+            databaseLabel.Text = $"Database: {databaseName}";
+            serverLabel.Text = $"Server: {server}";
         }
 
         private void ReloadDataFields()
@@ -71,7 +78,6 @@ namespace GetYourQuery.UI
             queryTextBox.Clear();
             ComboBox comboBox = sender as ComboBox;
             storedProcedureName = comboBox.Text.ToString();
-
         }
 
         private void SchemaComboBox_SelectedValueChanged(object sender, EventArgs e)
@@ -90,7 +96,6 @@ namespace GetYourQuery.UI
             procType = groupBox.Text.ToString();
 
             LoadStoreProcBox(storedProcBox, GetSelectedSchema(schemaBox), databaseName, procType);
-
         }
 
         private void FindButton_Click(object sender, EventArgs e)
@@ -113,27 +118,6 @@ namespace GetYourQuery.UI
             {
                 queryTextBox.Text = "Sorry, I couldn't find underlying table";
             }
-
-
         }
-
-        //private IStoredProcQuery GetStoredProcQueryType(string procType, DataTable tablesTable, string storedProcedureName, string schemaName)
-        //{
-        //    switch(procType)
-        //    {
-        //        case "Add":
-        //            return new AddStoredProcQuery(tablesTable, storedProcedureName, schemaName);
-        //        case "Update":
-        //            return new UpdateStoredProcQuery(tablesTable, storedProcedureName, schemaName);
-        //        case "Delete":
-        //            return new DeleteStoredProcQuery(tablesTable, storedProcedureName, schemaName);
-        //        case "Get":
-        //            return new GetStoredProcQuery(tablesTable, storedProcedureName, schemaName);
-        //        default:
-        //            {
-        //                throw new Exception("Type wasn't found");
-        //            }
-        //    }
-        //}
     }
 }

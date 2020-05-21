@@ -1,5 +1,7 @@
-﻿using System;
+﻿using GetYourQuery.Core;
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 
 namespace GetYourQuery.Data
@@ -67,6 +69,59 @@ namespace GetYourQuery.Data
             }
 
             return names;
+        }
+
+        public static Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schema, string procType, string procedure, List<string> IdList, DataTable TableNames)
+        {
+            var paramColumnTable = new Dictionary<string, ColumnTablePair>();
+
+            foreach (var name in IdList)
+            {
+
+                if (name.Contains("ByUser"))
+                {
+                    if ((procType == "Update" || procType == "Add") && name.Contains("Deleted")) //filters out DeletedByUserId column for add and update
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        paramColumnTable.Add(name, new ColumnTablePair("UserId", "[core].[Users]"));
+
+                    }
+                }
+                else
+                {
+                    var tableName = NameModifier.TableNameGet(name);
+                    var columnName = NameModifier.ColumnNameGet(name);
+
+                    if (IsTableExists(tableName, schema, TableNames) && !(procType == "Add" && tableName == NameModifier.TableNameGet(procedure)))
+                    {
+                        paramColumnTable.Add(name, new ColumnTablePair(columnName, $"[{schema}].[{tableName}]"));
+                    }
+                };
+            }
+
+            return paramColumnTable;
+        }
+
+        public static bool IsTableExists(string tableName, string schema, DataTable TableNames)
+        {
+            DataColumn tableDataColumn = TableNames.Columns["TABLE_NAME"];
+            //TODO: find how to exclude schema
+
+            if (tableDataColumn != null)
+            {
+                foreach (DataRow row in TableNames.Rows)
+                {
+                    var tabName = row[tableDataColumn].ToString();
+                    if (tabName == tableName)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }

@@ -19,7 +19,6 @@ namespace GetYourQuery.Data
 
         //TODO: for get stored procedures that have other tables ids create a pool of suitable ids to return data
         //example: for Equipment that has project id select equipment and project ids from project equipment table
-
         public Repository(string connString)
         {
             this.connString = connString;
@@ -35,8 +34,7 @@ namespace GetYourQuery.Data
             this.ParametersDataTable = ParametersTableGet(procedure, schema);
             ParamaterNamesSet(this.ParametersDataTable);
 
-            var data = TableAndColumnNamesGet(schema, procType, procedure);
-            //TODO: return different non id params based on the type
+            var data = NameModifier.TableAndColumnNamesGet(schema, procType, procedure, IdList, TableNames);
 
             string nonIdParams = ParametersDataGet(procedure, schema, procType);
             var idParams = IdParametersDataGet(data);
@@ -88,39 +86,6 @@ namespace GetYourQuery.Data
                     NonIdDict.Add(row[parmName].ToString(), row[parmType].ToString());
                 }
             }
-        }
-        public Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schema, string procType, string procedure)
-        {
-            var paramColumnTable = new Dictionary<string, ColumnTablePair>();
-
-            foreach (var name in IdList)
-            {
-
-                if (name.Contains("ByUser"))
-                {
-                    if ((procType == "Update" || procType == "Add") && name.Contains("Deleted")) //filters out DeletedByUserId column for add and update
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        paramColumnTable.Add(name, new ColumnTablePair("UserId", "[core].[Users]"));
-
-                    }
-                }
-                else
-                {
-                    var tableName = NameModifier.TableNameGet(name);
-                    var columnName = NameModifier.ColumnNameGet(name);
-
-                    if (IsTableExists(tableName, schema) && !(procType == "Add" && tableName == NameModifier.TableNameGet(procedure)))
-                    {
-                        paramColumnTable.Add(name, new ColumnTablePair(columnName, $"[{schema}].[{tableName}]"));
-                    }
-                };
-            }
-
-            return paramColumnTable;
         }
 
         public DataTable ParametersTableGet(string procedure, string schema)
@@ -253,13 +218,14 @@ namespace GetYourQuery.Data
 
         public string RelatedParametersDataGet()
         {
+            //TODO: pass list of ids like get non id function does
+            // Get the first set that returns results
             throw new System.NotImplementedException();
         }
 
+        //Function for Get stored procs only
         public string NonIdParametersDataGet(Dictionary<string, string> nonIdDict, string schema, string tableName, string pkName, string pk)
         {
-            //Function for Get stored procs only
-
             var nonIdParams = "";
 
             SqlConnection connection = new SqlConnection(connString);
@@ -269,7 +235,6 @@ namespace GetYourQuery.Data
                 connection.Open();
 
                 var paramNames = NameModifier.ColumnNameGet(nonIdDict);
-
 
                 var query = $"SELECT TOP(1) {string.Join(",", paramNames)} FROM [{schema}].{tableName} WHERE {pkName} = '{pk}' and IsDeleted = 0 ORDER BY DtLastUpdated DESC";
 
@@ -350,7 +315,6 @@ namespace GetYourQuery.Data
                 using SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    //dtLastUpdated = reader["DtLastUpdated"].ToString("dd/MM/yyyy");
                     dtLastUpdated = reader.GetDateTime(0).ToString("yyyy-MM-dd hh:mm:ss.fff");
                 }
             }
@@ -358,10 +322,6 @@ namespace GetYourQuery.Data
             {
                 connection.Close();
             }
-
-            //5/8/2020 2:48:12 AM
-            //dtLastUpdated = String.Format("{0:yyyy-M-d hh:mm:ss.fff}", dtLastUpdated);
-
             return $" ,@DtLastUpdated = '{dtLastUpdated}'";
         }
 

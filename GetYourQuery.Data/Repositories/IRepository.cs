@@ -20,7 +20,7 @@ namespace GetYourQuery.Data
         string DateLastUpdatedGet(string schema, string tableName, string pkName, string pk);
         string ParametersDataGet(string procedure, string schema, string procType);
         public bool IsTableExists(string tableName, string schema);
-        public Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schema, string procType, string procedure);
+        //public Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schema, string procType, string procedure);
         string DataGet(string text, string schema, string procType);
     }
 }

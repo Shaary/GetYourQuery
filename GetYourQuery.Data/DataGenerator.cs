@@ -44,48 +44,61 @@ namespace GetYourQuery.Data
                     nonIdParamColumnTable += $" ,{paramName} = {randomDouble}";
                     break;
 
+                case "float":
+                    randomDouble = random.Next(-4, 4) + (0.6689);
+                    nonIdParamColumnTable += $" ,{paramName} = {randomDouble}";
+                    break;
+
                 case "int":
                     nonIdParamColumnTable += $" ,{paramName} = {random.Next(0, 10)}";
                     break;
 
                 case "nvarchar":
                     var length = random.Next(0, 10);
-                    switch (paramName)
+                    if (paramName.Contains("Number"))
                     {
-                        case ("@Code"):
-                            nonIdParamColumnTable += $" ,{paramName} = '{length}'";
-                            break;
-                        case ("@Position"):
-                            nonIdParamColumnTable += $" ,{paramName} = '{length}'";
-                            break;
-                        case ("@Address1"):
-                            nonIdParamColumnTable += $" ,{paramName} = '{address[length]}'";
-                            break;
-                        case ("@Address2"):
-                            nonIdParamColumnTable += $" ,{paramName} = '{address[length]}'";
-                            break;
-                        case ("@City"):
-                            nonIdParamColumnTable += $" ,{paramName} = '{city[length]}'";
-                            break;
-                        case ("@StateProvince"):
-                            nonIdParamColumnTable += $" ,{paramName} = '{province[length]}'";
-                            break;
-                        case ("@Country"):
-                            nonIdParamColumnTable += $" ,{paramName} = '{country[length]}'";
-                            break;
-                        case ("@Phone"):
-                            var phoneNum = new string(Enumerable.Repeat(NUMS, 9)
-                                                      .Select(s => s[random.Next(s.Length)]).ToArray());
-                            nonIdParamColumnTable += $" ,{paramName} = '+1{phoneNum}'";
-                            break;
-
-                        default:
-                            {
-                                var randomString = new string(Enumerable.Repeat(CHARS, length)
-                                                      .Select(s => s[random.Next(s.Length)]).ToArray());
-                                nonIdParamColumnTable += $" ,{paramName} = '{randomString}'";
+                        nonIdParamColumnTable += $" ,{paramName} = '{random.Next(0, 100)}'";
+                    }
+                    else
+                    {
+                        switch (paramName)
+                        {
+                            case ("@Code"):
+                                nonIdParamColumnTable += $" ,{paramName} = '{length}'";
                                 break;
-                            }
+                            case ("@Position"):
+                                nonIdParamColumnTable += $" ,{paramName} = '{length}'";
+                                break;
+                            case ("@Address1"):
+                                nonIdParamColumnTable += $" ,{paramName} = '{address[length]}'";
+                                break;
+                            case ("@Address2"):
+                                nonIdParamColumnTable += $" ,{paramName} = '{address[length]}'";
+                                break;
+                            case ("@City"):
+                                nonIdParamColumnTable += $" ,{paramName} = '{city[length]}'";
+                                break;
+                            case ("@StateProvince"):
+                                nonIdParamColumnTable += $" ,{paramName} = '{province[length]}'";
+                                break;
+                            case ("@Country"):
+                                nonIdParamColumnTable += $" ,{paramName} = '{country[length]}'";
+                                break;
+                            case ("@Phone"):
+                                var phoneNum = new string(Enumerable.Repeat(NUMS, 9)
+                                                          .Select(s => s[random.Next(s.Length)]).ToArray());
+                                nonIdParamColumnTable += $" ,{paramName} = '+1{phoneNum}'";
+                                break;
+
+                            default:
+                                {
+                                    var randomString = new string(Enumerable.Repeat(CHARS, length)
+                                                          .Select(s => s[random.Next(s.Length)]).ToArray());
+                                    nonIdParamColumnTable += $" ,{paramName} = '{randomString}'";
+                                    break;
+                                }
+                        }
+
                     }
                     break;
 

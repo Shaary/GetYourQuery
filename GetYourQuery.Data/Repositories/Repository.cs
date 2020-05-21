@@ -35,27 +35,40 @@ namespace GetYourQuery.Data
             this.ParametersDataTable = ParametersTableGet(procedure, schema);
             ParamaterNamesSet(this.ParametersDataTable);
 
-            var data = TableAndColumnNamesGet(schema);
+            var data = TableAndColumnNamesGet(schema, procType, procedure);
             //TODO: return different non id params based on the type
-            string nonIdParams;
 
-            if (procType == "Get")
-            {
-                var tableName = NameModifier.TableNameGet(procedure);
-                var pkName = NameModifier.PkNameGet(procedure);
-                var pk = PrimaryKeyGet(schema, tableName, pkName);
-
-                nonIdParams = NonIdParametersDataGet(NonIdDict, schema, tableName, pkName, pk);
-            }
-            else
-            {
-                nonIdParams = ParametersDataGet(NonIdDict);
-            }
+            string nonIdParams = ParametersDataGet(procedure, schema, procType);
             var idParams = IdParametersDataGet(data);
 
             Clear();
 
             return idParams + nonIdParams;
+        }
+
+        public string ParametersDataGet(string procedure, string schema, string procType)
+        {
+            string nonIdParams;
+
+            var tableName = NameModifier.TableNameGet(procedure);
+            var pkName = NameModifier.PkNameGet(procedure);
+            var pk = PrimaryKeyGet(schema, tableName, pkName);
+
+            if (procType == "Get")
+            {
+                nonIdParams = NonIdParametersDataGet(NonIdDict, schema, tableName, pkName, pk);
+            }
+            else
+            {
+                nonIdParams = NonIdParametersDataGet(NonIdDict);
+            }
+
+            if (procType == "Update" || procType == "Delete")
+            {
+                nonIdParams = NonIdParametersDataGet(NonIdDict) + DateLastUpdatedGet(schema, tableName, pkName, pk);
+            }
+
+            return nonIdParams;
         }
 
         public virtual void ParamaterNamesSet(DataTable parmsDataTable)
@@ -70,13 +83,13 @@ namespace GetYourQuery.Data
                     IdList.Add(row[parmName].ToString());
                 }
                 //For non-id parameters I need to know data type to generate values for add and update
-                else
+                else if (!row[parmName].ToString().Contains("DtLastUpdated"))
                 {
                     NonIdDict.Add(row[parmName].ToString(), row[parmType].ToString());
                 }
             }
         }
-        public virtual Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schema)
+        public Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schema, string procType, string procedure)
         {
             var paramColumnTable = new Dictionary<string, ColumnTablePair>();
 
@@ -85,14 +98,22 @@ namespace GetYourQuery.Data
 
                 if (name.Contains("ByUser"))
                 {
-                    paramColumnTable.Add(name, new ColumnTablePair("UserId", "[core].[Users]"));
+                    if ((procType == "Update" || procType == "Add") && name.Contains("Deleted")) //filters out DeletedByUserId column for add and update
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        paramColumnTable.Add(name, new ColumnTablePair("UserId", "[core].[Users]"));
+
+                    }
                 }
                 else
                 {
                     var tableName = NameModifier.TableNameGet(name);
                     var columnName = NameModifier.ColumnNameGet(name);
 
-                    if (IsTableExists(tableName, schema))
+                    if (IsTableExists(tableName, schema) && !(procType == "Add" && tableName == NameModifier.TableNameGet(procedure)))
                     {
                         paramColumnTable.Add(name, new ColumnTablePair(columnName, $"[{schema}].[{tableName}]"));
                     }
@@ -167,7 +188,7 @@ namespace GetYourQuery.Data
             {
                 connection.Open();
 
-                var query = $"SELECT SPECIFIC_NAME FROM [{database}].INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' and SPECIFIC_SCHEMA = '{schema}' and SPECIFIC_NAME like '%{procType}'; ";
+                var query = $"SELECT SPECIFIC_NAME FROM [{database}].INFORMATION_SCHEMA.ROUTINES WHERE ROUTINE_TYPE = 'PROCEDURE' and SPECIFIC_SCHEMA = '{schema}' and SPECIFIC_NAME like '%{procType}' ORDER BY SPECIFIC_NAME; ";
 
                 var cmd = new SqlCommand(query, connection);
 
@@ -213,7 +234,7 @@ namespace GetYourQuery.Data
             {
                 connection.Open();
 
-                var query = $"SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA where SCHEMA_NAME not in ('sys', 'guest', 'INFORMATION_SCHEMA') and SCHEMA_NAME not like 'db_%'; ";
+                var query = $"SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA where SCHEMA_NAME not in ('sys', 'guest', 'INFORMATION_SCHEMA') and SCHEMA_NAME not like 'db_%' ORDER BY SCHEMA_NAME; ";
 
                 var cmd = new SqlCommand(query, connection);
 
@@ -329,7 +350,8 @@ namespace GetYourQuery.Data
                 using SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    dtLastUpdated = reader[pkName].ToString();
+                    //dtLastUpdated = reader["DtLastUpdated"].ToString("dd/MM/yyyy");
+                    dtLastUpdated = reader.GetDateTime(0).ToString("yyyy-MM-dd hh:mm:ss.fff");
                 }
             }
             finally
@@ -337,10 +359,13 @@ namespace GetYourQuery.Data
                 connection.Close();
             }
 
-            return dtLastUpdated;
+            //5/8/2020 2:48:12 AM
+            //dtLastUpdated = String.Format("{0:yyyy-M-d hh:mm:ss.fff}", dtLastUpdated);
+
+            return $" ,@DtLastUpdated = '{dtLastUpdated}'";
         }
 
-        public virtual string ParametersDataGet(Dictionary<string, string> NonIdDict)
+        public string NonIdParametersDataGet(Dictionary<string, string> NonIdDict)
         {
             var nonIdParamColumnTable = "";
 

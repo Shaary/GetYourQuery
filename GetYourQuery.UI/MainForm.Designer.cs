@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows.Forms;
 
 namespace GetYourQuery.UI
 {
@@ -135,6 +136,7 @@ namespace GetYourQuery.UI
             this.queryTextBox.ReadOnly = true;
             this.queryTextBox.Size = new System.Drawing.Size(486, 185);
             this.queryTextBox.TabIndex = 4;
+            this.queryTextBox.ScrollBars = ScrollBars.Vertical;
             // 
             // btnFind
             // 

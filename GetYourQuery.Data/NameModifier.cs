@@ -1,9 +1,6 @@
 ﻿using GetYourQuery.Core;
-using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Reflection.Metadata;
-using System.Text;
 
 namespace GetYourQuery.Data
 {
@@ -171,15 +168,21 @@ namespace GetYourQuery.Data
             return nonIdDict;
         }
 
-        public static string SpecialParamaterNamesSet()
+        public static string SpecialParamaterNamesSet(DataTable paramsDataTable)
         {
             var specialParams = "";
 
-            foreach (var param in specialCases)
-            {
-                specialParams += $" ,{param} = null";
-            }
+            DataColumn paramName = paramsDataTable.Columns["PARAMETER_NAME"];
 
+            foreach (DataRow row in paramsDataTable.Rows)
+            {
+                var result = specialCases.IndexOf(row[paramName].ToString());
+
+                if (result != -1)
+                {
+                    specialParams += $" ,{specialCases[result]} = null";
+                }
+            }
             return specialParams;
         }
     }

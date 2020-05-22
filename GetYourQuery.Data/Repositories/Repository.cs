@@ -18,7 +18,6 @@ namespace GetYourQuery.Data
         //TODO: for get stored procedures that have other tables ids create a pool of suitable ids to return data
         //example: for Equipment that has project id select equipment and project ids from project equipment table
         //TODO: make special cases for lists
-        //TODO: if error occurs log it in query window instead of crushing the app
         //TODO: create datagenerator for user defined tables
         public Repository(string connString)
         {
@@ -38,10 +37,11 @@ namespace GetYourQuery.Data
 
             var nonIdParams = ParametersDataGet(procedure, schema, procType, nonIdDict);
             var idParams = IdParametersDataGet(data);
+            var specialParams = NameModifier.SpecialParamaterNamesSet(ParametersDataTable);
 
             Clear();
           
-            return idParams + nonIdParams;
+            return idParams + nonIdParams + specialParams;
         }
 
         public string ParametersDataGet(string procedure, string schema, string procType, Dictionary<string, string> nonIdDict)

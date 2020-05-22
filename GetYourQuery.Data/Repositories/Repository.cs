@@ -35,7 +35,12 @@ namespace GetYourQuery.Data
 
             var data = NameModifier.TableAndColumnNamesGet(schema, procType, procedure, idList, TableNames);
 
-            var nonIdParams = ParametersDataGet(procedure, schema, procType, nonIdDict);
+            var nonIdParams = "";
+            if (nonIdDict.Count > 0)
+            {
+                nonIdParams = ParametersDataGet(procedure, schema, procType, nonIdDict);
+            }
+
             var idParams = IdParametersDataGet(data);
             var specialParams = NameModifier.SpecialParamaterNamesSet(ParametersDataTable);
 
@@ -244,7 +249,7 @@ namespace GetYourQuery.Data
                         }
                         else
                         {
-                            nonIdParams += $" ,@filter_{par}_eq = {reader[par]}";
+                            nonIdParams += $" ,@filter_{par}_eq = '{reader[par]}'";
                         }
                     }
                 }
@@ -304,7 +309,7 @@ namespace GetYourQuery.Data
                 using SqlDataReader reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    dtLastUpdated = reader.GetDateTime(0).ToString("yyyy-MM-dd hh:mm:ss.fff");
+                    dtLastUpdated = reader.GetDateTime(0).ToString("yyyy-MM-dd HH:mm:ss.fff");
                 }
             }
             finally

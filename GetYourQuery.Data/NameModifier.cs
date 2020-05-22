@@ -6,7 +6,7 @@ namespace GetYourQuery.Data
 {
     public class NameModifier
     {
-        public static List<string> specialCases = new List<string> { "@debug_mode", "@SortBy", "@SortDirection", "@filter_mf_text_like", "@page_number", "@page_size", "@PageNumber", "@PageSize", "executed_by_procid" };
+        public static List<string> specialCases = new List<string> { "@debug_mode", "@SortBy", "@SortDirection", "@filter_mf_text_like", "@page_number", "@page_size", "@PageNumber", "@PageSize", "@executed_by_procid", "@filter_DueBy_eq", "@filter_Od_eq" };
         public static string TableNameGet(string name)
         {
             var tableName = name.Replace("@filter_", "")
@@ -35,6 +35,9 @@ namespace GetYourQuery.Data
             return name.Replace("@filter_", "")
                        .Replace("_eq", "")
                        .Replace("_list", "")
+                       .Replace("_noteq", "")
+                       .Replace("_gt", "")
+                       .Replace("_lt", "")
                        .Replace("@", "");
         }
 
@@ -66,6 +69,9 @@ namespace GetYourQuery.Data
                 names.Add(name.Replace("@filter_", "")
                        .Replace("_eq", "")
                        .Replace("_list", "")
+                       .Replace("_noteq", "")
+                       .Replace("_gt", "")
+                       .Replace("_lt", "")
                        .Replace("@", ""));
             }
 
@@ -155,11 +161,7 @@ namespace GetYourQuery.Data
                 {
                     var result = specialCases.IndexOf(row[paramName].ToString());
 
-                    if (result != -1)
-                    {
-                        nonIdDict.Add(row[paramName].ToString(), "NULL");
-                    }
-                    else
+                    if (result == -1)
                     {
                         nonIdDict.Add(row[paramName].ToString(), row[paramType].ToString());
                     }

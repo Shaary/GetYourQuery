@@ -35,6 +35,7 @@ namespace GetYourQuery.Data
         {
             return name.Replace("@filter_", "")
                        .Replace("_eq", "")
+                       .Replace("_list", "")
                        .Replace("@", "");
         }
 
@@ -65,6 +66,7 @@ namespace GetYourQuery.Data
             {
                 names.Add(name.Replace("@filter_", "")
                        .Replace("_eq", "")
+                       .Replace("_list", "")
                        .Replace("@", ""));
             }
 
@@ -122,6 +124,40 @@ namespace GetYourQuery.Data
                 }
             }
             return false;
+        }
+
+        public static List<string> IdParamaterNamesSet(DataTable parmsDataTable)
+        {
+            List<string> idList = new List<string>();
+
+            DataColumn parmName = parmsDataTable.Columns["PARAMETER_NAME"];
+
+            foreach (DataRow row in parmsDataTable.Rows)
+            {
+                if (row[parmName].ToString().Contains("Id"))
+                {
+                    idList.Add(row[parmName].ToString());
+                }
+            }
+            return idList;
+        }
+
+        public static Dictionary<string, string> NonIdParamaterNamesSet(DataTable parmsDataTable)
+        {
+            Dictionary<string, string> nonIdDict = new Dictionary<string, string>();
+
+            DataColumn parmName = parmsDataTable.Columns["PARAMETER_NAME"];
+            DataColumn parmType = parmsDataTable.Columns["DATA_TYPE"];
+
+            foreach (DataRow row in parmsDataTable.Rows)
+            {
+                //For non-id parameters I need to know data type to generate values for add and update
+                if (!row[parmName].ToString().Contains("DtLastUpdated") && !row[parmName].ToString().Contains("Id"))
+                {
+                    nonIdDict.Add(row[parmName].ToString(), row[parmType].ToString());
+                }
+            }
+            return nonIdDict;
         }
     }
 }

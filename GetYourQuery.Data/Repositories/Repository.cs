@@ -19,6 +19,9 @@ namespace GetYourQuery.Data
 
         //TODO: for get stored procedures that have other tables ids create a pool of suitable ids to return data
         //example: for Equipment that has project id select equipment and project ids from project equipment table
+        //TODO: make special cases for lists
+        //TODO: if error occurs log it in query window instead of crushing the app
+        //TODO: filter our debug_mode
         public Repository(string connString)
         {
             this.connString = connString;
@@ -32,7 +35,8 @@ namespace GetYourQuery.Data
         public string DataGet(string procedure, string schema, string procType)
         {
             this.ParametersDataTable = ParametersTableGet(procedure, schema);
-            ParamaterNamesSet(this.ParametersDataTable);
+            IdList = NameModifier.IdParamaterNamesSet(ParametersDataTable);
+            NonIdDict = NameModifier.NonIdParamaterNamesSet(ParametersDataTable);
 
             var data = NameModifier.TableAndColumnNamesGet(schema, procType, procedure, IdList, TableNames);
 
@@ -52,6 +56,14 @@ namespace GetYourQuery.Data
             var pkName = NameModifier.PkNameGet(procedure);
             var pk = PrimaryKeyGet(schema, tableName, pkName);
 
+            nonIdParams = NonIdParametersDataGet(schema, procType, tableName, pkName, pk);
+
+            return nonIdParams;
+        }
+
+        private string NonIdParametersDataGet(string schema, string procType, string tableName, string pkName, string pk)
+        {
+            string nonIdParams;
             if (procType == "Get")
             {
                 nonIdParams = NonIdParametersDataGet(NonIdDict, schema, tableName, pkName, pk);
@@ -69,24 +81,24 @@ namespace GetYourQuery.Data
             return nonIdParams;
         }
 
-        public virtual void ParamaterNamesSet(DataTable parmsDataTable)
-        {
-            DataColumn parmName = parmsDataTable.Columns["PARAMETER_NAME"];
-            DataColumn parmType = parmsDataTable.Columns["DATA_TYPE"];
+        //public virtual void ParamaterNamesSet(DataTable parmsDataTable)
+        //{
+        //    DataColumn parmName = parmsDataTable.Columns["PARAMETER_NAME"];
+        //    DataColumn parmType = parmsDataTable.Columns["DATA_TYPE"];
 
-            foreach (DataRow row in parmsDataTable.Rows)
-            {
-                if (row[parmName].ToString().Contains("Id"))
-                {
-                    IdList.Add(row[parmName].ToString());
-                }
-                //For non-id parameters I need to know data type to generate values for add and update
-                else if (!row[parmName].ToString().Contains("DtLastUpdated"))
-                {
-                    NonIdDict.Add(row[parmName].ToString(), row[parmType].ToString());
-                }
-            }
-        }
+        //    foreach (DataRow row in parmsDataTable.Rows)
+        //    {
+        //        if (row[parmName].ToString().Contains("Id"))
+        //        {
+        //            IdList.Add(row[parmName].ToString());
+        //        }
+        //        //For non-id parameters I need to know data type to generate values for add and update
+        //        else if (!row[parmName].ToString().Contains("DtLastUpdated"))
+        //        {
+        //            NonIdDict.Add(row[parmName].ToString(), row[parmType].ToString());
+        //        }
+        //    }
+        //}
 
         public DataTable ParametersTableGet(string procedure, string schema)
         {

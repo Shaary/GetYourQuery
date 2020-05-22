@@ -2,12 +2,14 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Reflection.Metadata;
 using System.Text;
 
 namespace GetYourQuery.Data
 {
     public class NameModifier
     {
+        public static List<string> specialCases = new List<string> { "@debug_mode", "@SortBy", "@SortDirection", "@filter_mf_text_like", "@page_number", "@page_size", "@PageNumber", "@PageSize", "executed_by_procid" };
         public static string TableNameGet(string name)
         {
             var tableName = name.Replace("@filter_", "")
@@ -126,38 +128,50 @@ namespace GetYourQuery.Data
             return false;
         }
 
-        public static List<string> IdParamaterNamesSet(DataTable parmsDataTable)
+        public static List<string> IdParamaterNamesSet(DataTable paramsDataTable)
         {
             List<string> idList = new List<string>();
 
-            DataColumn parmName = parmsDataTable.Columns["PARAMETER_NAME"];
+            DataColumn paramName = paramsDataTable.Columns["PARAMETER_NAME"];
 
-            foreach (DataRow row in parmsDataTable.Rows)
+            foreach (DataRow row in paramsDataTable.Rows)
             {
-                if (row[parmName].ToString().Contains("Id"))
+                if (row[paramName].ToString().Contains("Id"))
                 {
-                    idList.Add(row[parmName].ToString());
+                    idList.Add(row[paramName].ToString());
                 }
             }
             return idList;
         }
 
-        public static Dictionary<string, string> NonIdParamaterNamesSet(DataTable parmsDataTable)
+        public static Dictionary<string, string> NonIdParamaterNamesSet(DataTable paramsDataTable)
         {
             Dictionary<string, string> nonIdDict = new Dictionary<string, string>();
 
-            DataColumn parmName = parmsDataTable.Columns["PARAMETER_NAME"];
-            DataColumn parmType = parmsDataTable.Columns["DATA_TYPE"];
+            DataColumn paramName = paramsDataTable.Columns["PARAMETER_NAME"];
+            DataColumn paramType = paramsDataTable.Columns["DATA_TYPE"];
 
-            foreach (DataRow row in parmsDataTable.Rows)
+            foreach (DataRow row in paramsDataTable.Rows)
             {
                 //For non-id parameters I need to know data type to generate values for add and update
-                if (!row[parmName].ToString().Contains("DtLastUpdated") && !row[parmName].ToString().Contains("Id"))
+                if (!row[paramName].ToString().Contains("DtLastUpdated") && !row[paramName].ToString().Contains("Id") && specialCases.IndexOf(row[paramName].ToString()) == -1)
                 {
-                    nonIdDict.Add(row[parmName].ToString(), row[parmType].ToString());
+                    nonIdDict.Add(row[paramName].ToString(), row[paramType].ToString());
                 }
             }
             return nonIdDict;
+        }
+
+        public static string SpecialParamaterNamesSet()
+        {
+            var specialParams = "";
+
+            foreach (var param in specialCases)
+            {
+                specialParams += $" ,{param} = null";
+            }
+
+            return specialParams;
         }
     }
 }

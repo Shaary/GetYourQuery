@@ -14,41 +14,38 @@ namespace GetYourQuery.Data
         public List<string> SchemaList { get; set; }
         public DataTable ParametersDataTable { get; set; }
         public DataTable TableNames { get; set; }
-        public List<string> IdList { get; set; }
-        public Dictionary<string, string> NonIdDict { get; set; }
 
         //TODO: for get stored procedures that have other tables ids create a pool of suitable ids to return data
         //example: for Equipment that has project id select equipment and project ids from project equipment table
         //TODO: make special cases for lists
         //TODO: if error occurs log it in query window instead of crushing the app
-        //TODO: filter our debug_mode
+        //TODO: create datagenerator for user defined tables
         public Repository(string connString)
         {
             this.connString = connString;
             SchemaList = SchemaNamesGet();
             TableNames = TableNamesGet();
 
-            IdList = new List<string>();
-            NonIdDict = new Dictionary<string, string>();
         }
 
         public string DataGet(string procedure, string schema, string procType)
         {
-            this.ParametersDataTable = ParametersTableGet(procedure, schema);
-            IdList = NameModifier.IdParamaterNamesSet(ParametersDataTable);
-            NonIdDict = NameModifier.NonIdParamaterNamesSet(ParametersDataTable);
+            ParametersDataTable = ParametersTableGet(procedure, schema);
+            var idList = NameModifier.IdParamaterNamesSet(ParametersDataTable);
+            var nonIdDict = NameModifier.NonIdParamaterNamesSet(ParametersDataTable);
 
-            var data = NameModifier.TableAndColumnNamesGet(schema, procType, procedure, IdList, TableNames);
+            var data = NameModifier.TableAndColumnNamesGet(schema, procType, procedure, idList, TableNames);
 
-            string nonIdParams = ParametersDataGet(procedure, schema, procType);
+            var nonIdParams = ParametersDataGet(procedure, schema, procType, nonIdDict);
             var idParams = IdParametersDataGet(data);
+            var specialParams = NameModifier.SpecialParamaterNamesSet();
 
             Clear();
-
-            return idParams + nonIdParams;
+          
+            return idParams + nonIdParams + specialParams;
         }
 
-        public string ParametersDataGet(string procedure, string schema, string procType)
+        public string ParametersDataGet(string procedure, string schema, string procType, Dictionary<string, string> nonIdDict)
         {
             string nonIdParams;
 
@@ -56,49 +53,30 @@ namespace GetYourQuery.Data
             var pkName = NameModifier.PkNameGet(procedure);
             var pk = PrimaryKeyGet(schema, tableName, pkName);
 
-            nonIdParams = NonIdParametersDataGet(schema, procType, tableName, pkName, pk);
+            nonIdParams = NonIdParametersDataGet(schema, procType, tableName, pkName, pk, nonIdDict);
 
             return nonIdParams;
         }
 
-        private string NonIdParametersDataGet(string schema, string procType, string tableName, string pkName, string pk)
+        private string NonIdParametersDataGet(string schema, string procType, string tableName, string pkName, string pk, Dictionary<string, string> nonIdDict)
         {
             string nonIdParams;
             if (procType == "Get")
             {
-                nonIdParams = NonIdParametersDataGet(NonIdDict, schema, tableName, pkName, pk);
+                nonIdParams = NonIdParametersDataGet(nonIdDict, schema, tableName, pkName, pk);
             }
             else
             {
-                nonIdParams = NonIdParametersDataGet(NonIdDict);
+                nonIdParams = NonIdParametersDataGet(nonIdDict);
             }
 
             if (procType == "Update" || procType == "Delete")
             {
-                nonIdParams = NonIdParametersDataGet(NonIdDict) + DateLastUpdatedGet(schema, tableName, pkName, pk);
+                nonIdParams = NonIdParametersDataGet(nonIdDict) + DateLastUpdatedGet(schema, tableName, pkName, pk);
             }
 
             return nonIdParams;
         }
-
-        //public virtual void ParamaterNamesSet(DataTable parmsDataTable)
-        //{
-        //    DataColumn parmName = parmsDataTable.Columns["PARAMETER_NAME"];
-        //    DataColumn parmType = parmsDataTable.Columns["DATA_TYPE"];
-
-        //    foreach (DataRow row in parmsDataTable.Rows)
-        //    {
-        //        if (row[parmName].ToString().Contains("Id"))
-        //        {
-        //            IdList.Add(row[parmName].ToString());
-        //        }
-        //        //For non-id parameters I need to know data type to generate values for add and update
-        //        else if (!row[parmName].ToString().Contains("DtLastUpdated"))
-        //        {
-        //            NonIdDict.Add(row[parmName].ToString(), row[parmType].ToString());
-        //        }
-        //    }
-        //}
 
         public DataTable ParametersTableGet(string procedure, string schema)
         {
@@ -369,8 +347,6 @@ namespace GetYourQuery.Data
 
         public void Clear()
         {
-            NonIdDict.Clear();
-            IdList.Clear();
             ParametersDataTable.Clear();
         }
     }

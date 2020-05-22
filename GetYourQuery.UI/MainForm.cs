@@ -100,24 +100,32 @@ namespace GetYourQuery.UI
 
         private void FindButton_Click(object sender, EventArgs e)
         {
-            var schema = GetSelectedSchema(schemaBox);
-            var storedProc = storedProcBox.Text;
-
-            var storedProcQuery = new StoredProcQuery();
-
-            var tableName = NameModifier.TableNameGet(storedProc);
-
-            if (repository.IsTableExists(tableName, schema))
+            try
             {
-                var data = repository.DataGet(storedProc, schema, procType);
+                var schema = GetSelectedSchema(schemaBox);
+                var storedProc = storedProcBox.Text;
 
-                //TODO: add scroll bar to query text
-                queryTextBox.Text = storedProcQuery.QueryGet(schema, storedProc, data);
+                var storedProcQuery = new StoredProcQuery();
+
+                var tableName = NameModifier.TableNameGet(storedProc);
+
+                if (repository.IsTableExists(tableName, schema))
+                {
+                    var data = repository.DataGet(storedProc, schema, procType);
+
+                    //TODO: add scroll bar to query text
+                    queryTextBox.Text = storedProcQuery.QueryGet(schema, storedProc, data);
+                }
+                else
+                {
+                    queryTextBox.Text = "Sorry, I couldn't find underlying table";
+                }
             }
-            else
+            catch (Exception ex)
             {
-                queryTextBox.Text = "Sorry, I couldn't find underlying table";
+                queryTextBox.Text = ex.ToString();
             }
+            
         }
     }
 }

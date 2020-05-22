@@ -18,7 +18,7 @@ namespace GetYourQuery.Data
         string NonIdParametersDataGet(Dictionary<string, string> NonIdDict, string schema, string tableName, string pkName, string pk);
         string PrimaryKeyGet(string schema, string tableName, string pkName);
         string DateLastUpdatedGet(string schema, string tableName, string pkName, string pk);
-        string ParametersDataGet(string procedure, string schema, string procType);
+        string ParametersDataGet(string procedure, string schema, string procType, Dictionary<string, string> nonIdDict);
         public bool IsTableExists(string tableName, string schema);
         //public Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schema, string procType, string procedure);
         string DataGet(string text, string schema, string procType);

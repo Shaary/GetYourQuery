@@ -38,11 +38,10 @@ namespace GetYourQuery.Data
 
             var nonIdParams = ParametersDataGet(procedure, schema, procType, nonIdDict);
             var idParams = IdParametersDataGet(data);
-            var specialParams = NameModifier.SpecialParamaterNamesSet();
 
             Clear();
           
-            return idParams + nonIdParams + specialParams;
+            return idParams + nonIdParams;
         }
 
         public string ParametersDataGet(string procedure, string schema, string procType, Dictionary<string, string> nonIdDict)

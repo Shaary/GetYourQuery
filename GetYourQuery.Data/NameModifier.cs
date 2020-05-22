@@ -154,9 +154,18 @@ namespace GetYourQuery.Data
             foreach (DataRow row in paramsDataTable.Rows)
             {
                 //For non-id parameters I need to know data type to generate values for add and update
-                if (!row[paramName].ToString().Contains("DtLastUpdated") && !row[paramName].ToString().Contains("Id") && specialCases.IndexOf(row[paramName].ToString()) == -1)
+                if (!row[paramName].ToString().Contains("DtLastUpdated") && !row[paramName].ToString().Contains("Id"))
                 {
-                    nonIdDict.Add(row[paramName].ToString(), row[paramType].ToString());
+                    var result = specialCases.IndexOf(row[paramName].ToString());
+
+                    if (result != -1)
+                    {
+                        nonIdDict.Add(row[paramName].ToString(), "NULL");
+                    }
+                    else
+                    {
+                        nonIdDict.Add(row[paramName].ToString(), row[paramType].ToString());
+                    }
                 }
             }
             return nonIdDict;

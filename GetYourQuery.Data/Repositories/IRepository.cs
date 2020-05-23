@@ -14,7 +14,7 @@ namespace GetYourQuery.Data
         List<string> StoredProcedureNamesGet(string schema, string database, string procType);
         DataTable TableNamesGet();
         List<string> SchemaNamesGet();
-        string RelatedParametersDataGet();
+        string RelatedParametersDataGet(List<string> idList);
         string NonIdParametersDataGet(Dictionary<string, string> NonIdDict, string schema, string tableName, string pkName, string pk);
         string PrimaryKeyGet(string schema, string tableName, string pkName);
         string DateLastUpdatedGet(string schema, string tableName, string pkName, string pk);

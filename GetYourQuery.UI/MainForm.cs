@@ -105,16 +105,13 @@ namespace GetYourQuery.UI
                 var schema = GetSelectedSchema(schemaBox);
                 var storedProc = storedProcBox.Text;
 
-                var storedProcQuery = new StoredProcQuery();
-
                 var tableName = NameModifier.TableNameGet(storedProc);
 
                 if (repository.IsTableExists(tableName, schema))
                 {
                     var data = repository.DataGet(storedProc, schema, procType);
 
-                    //TODO: add scroll bar to query text
-                    queryTextBox.Text = storedProcQuery.QueryGet(schema, storedProc, data);
+                    queryTextBox.Text = StoredProcQuery.QueryGet(schema, storedProc, data);
                 }
                 else
                 {

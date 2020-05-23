@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Net.WebSockets;
 
 namespace GetYourQuery.Data
 {
@@ -17,7 +18,6 @@ namespace GetYourQuery.Data
 
         //TODO: for get stored procedures that have other tables ids create a pool of suitable ids to return data
         //example: for Equipment that has project id select equipment and project ids from project equipment table
-        //TODO: make special cases for lists
         //TODO: create datagenerator for user defined tables
         public Repository(string connString)
         {
@@ -45,7 +45,9 @@ namespace GetYourQuery.Data
             var specialParams = NameModifier.SpecialParamaterNamesSet(ParametersDataTable);
 
             Clear();
-          
+
+            var t = RelatedParametersDataGet(idList);
+
             return idParams + nonIdParams + specialParams;
         }
 
@@ -181,6 +183,13 @@ namespace GetYourQuery.Data
                 connection.Close();
             }
 
+            DataColumnCollection columns = dataTable.Columns;
+            var k = "";
+            foreach (var column in columns)
+            {
+                k += "   " + column;
+            }
+
             return dataTable;
         }
 
@@ -210,11 +219,50 @@ namespace GetYourQuery.Data
             return schemaList;
         }
 
-        public string RelatedParametersDataGet()
+        public string RelatedParametersDataGet(List<string> idList)
         {
-            //TODO: pass list of ids like get non id function does
-            // Get the first set that returns results
-            throw new System.NotImplementedException();
+            var dataTable = CommonDataTableGet();
+            DataColumnCollection columns = dataTable.Columns;
+
+            var relatedIds = "";
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                foreach (var parameter in idList)
+                {
+                    var columnName = NameModifier.ColumnNameGet(parameter);
+                    if (columns.Contains(columnName))
+                    {
+                        var id = row[columnName].ToString();
+                        relatedIds += $" ,{columnName} = {id} ";
+                    }
+                }
+                
+            }
+            return relatedIds;
+        }
+
+        public DataTable CommonDataTableGet()
+        {
+            var query = "select distinct * from fs.Tasks t inner join fs.ProjectEquipments pe on t.ProjectEquipmentId = pe.ProjectEquipmentId ";
+            query += " inner join fs.Equipments e on pe.EquipmentId = e.EquipmentId ";
+            query += " inner join fs.Projects p on pe.ProjectId = p.ProjectId ";
+            query += " inner join fs.Facilities f on e.FacilityId = f.FacilityId ";
+            query += " inner join fs.InspectionPoints ips on e.EquipmentId = ips.EquipmentId ";
+                            
+
+            DataTable dataTable = new DataTable();
+            using (SqlConnection connection = new SqlConnection(connString))
+            {
+                using (SqlCommand cmd = new SqlCommand(query, connection))
+                {
+                    using (SqlDataAdapter da = new SqlDataAdapter(cmd))
+                    {
+                        da.Fill(dataTable);
+                    }
+                }
+            }
+            return dataTable;
         }
 
         //Function for Get stored procs only

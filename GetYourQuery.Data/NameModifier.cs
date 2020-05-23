@@ -74,13 +74,28 @@ namespace GetYourQuery.Data
                        .Replace("_lt", "")
                        .Replace("@", ""));
             }
-
             return names;
         }
 
         public static Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schema, string procType, string procedure, List<string> IdList, DataTable TableNames)
         {
             var paramColumnTable = new Dictionary<string, ColumnTablePair>();
+
+            var usersSchema = "";
+            DataRowCollection rows = TableNames.Rows;
+
+            var schemaColumnName = "TABLE_SCHEMA";
+            var tableColumnName = "TABLE_NAME";
+
+            var result = TableNames
+                            .AsEnumerable()
+                            .Where(row => row.Field<string>(tableColumnName) == "Users");
+
+            foreach (var a in result)
+            {
+                usersSchema = a[schemaColumnName].ToString();
+                break; //I need the first one. TODO: check if schema for users in 'core", "common", "dbo"
+            }
 
             foreach (var name in IdList)
             {
@@ -93,7 +108,7 @@ namespace GetYourQuery.Data
                     }
                     else
                     {
-                        paramColumnTable.Add(name, new ColumnTablePair("UserId", "[core].[Users]"));
+                        paramColumnTable.Add(name, new ColumnTablePair("UserId", $"[{usersSchema}].[Users]"));
 
                     }
                 }
@@ -115,14 +130,15 @@ namespace GetYourQuery.Data
         public static bool IsTableExists(string tableName, string schema, DataTable TableNames)
         {
             DataColumn tableDataColumn = TableNames.Columns["TABLE_NAME"];
-            //TODO: find how to exclude schema
+            DataColumn schemaDataColumn = TableNames.Columns["TABLE_SCHEMA"];
 
             if (tableDataColumn != null)
             {
                 foreach (DataRow row in TableNames.Rows)
                 {
                     var tabName = row[tableDataColumn].ToString();
-                    if (tabName == tableName)
+                    var schName = row[schemaDataColumn].ToString();
+                    if (tabName == tableName && schName == schema)
                     {
                         return true;
                     }

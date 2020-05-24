@@ -16,12 +16,10 @@ namespace GetYourQuery.Data
         public DataTable TableNames { get; set; }
         public DataTable CommonIdsTable { get; }
 
-        //TODO: for get stored procedures that have other tables ids create a pool of suitable ids to return data
-        //example: for Equipment that has project id select equipment and project ids from project equipment table
-        //TODO: create datagenerator for user defined tables
         //TODO: verify that get stored procedure returns results and if not try the next one
         //TODO: create filters
         //TODO: show parameters as checkboxes
+        //TODO: create separate NameModifier classes for camel and snake cases
         public Repository(string connString)
         {
             this.connString = connString;
@@ -35,8 +33,9 @@ namespace GetYourQuery.Data
         {
             ParametersDataTable = ParametersTableGet(procedure, schema);
             var idList = NameModifier.IdParamaterNamesSet(ParametersDataTable);
+            var userList = NameModifier.UserParamaterNamesSet(ParametersDataTable);
             var nonIdDict = NameModifier.NonIdParamaterNamesSet(ParametersDataTable);
-            var userIdList = NameModifier.UserIdNamesSet(idList, procType);
+            var userIdList = NameModifier.UserIdNamesSet(userList, procType);
             var listIdDict = NameModifier.ListIdParamaterNamesSet(ParametersDataTable);
             var userSchema = NameModifier.UsersSchemaNameSet(TableNames);
             var data = NameModifier.TableAndColumnNamesSet(schema, procType, procedure, idList, TableNames);
@@ -63,7 +62,7 @@ namespace GetYourQuery.Data
             var idParams = "";
             if (procType == "Get")
             {
-                idParams = RelatedParametersDataGet(idList, CommonIdsTable);
+                idParams = RelatedParametersDataGet(idList, CommonIdsTable, schema);
             }
             else
             {
@@ -90,7 +89,7 @@ namespace GetYourQuery.Data
             if (IsTableExists(tableName, schema) && !tableName.Contains("Status"))
             {
                 var pkName = NameModifier.PkNameGet(procedure);
-                var pk = PrimaryKeyGet(schema, tableName, pkName);
+                var pk = PrimaryKeyIdGet(schema, tableName, pkName);
 
                 nonIdParams = NonIdParametersDataGet(schema, procType, tableName, pkName, pk, nonIdDict);
             }
@@ -151,7 +150,7 @@ namespace GetYourQuery.Data
                     var name = item.Key;
                     var columnTable = item.Value;
 
-                    var query = $"SELECT TOP(1) {columnTable.ColumnName} FROM {columnTable.TableName} WHERE IsDeleted = 0;";
+                    var query = $"SELECT TOP(1) {columnTable.ColumnName} FROM {columnTable.TableName} WHERE IsDeleted = 0 ORDER BY NEWID();";
 
                     var cmd = new SqlCommand(query, connection);
 
@@ -171,6 +170,46 @@ namespace GetYourQuery.Data
                 connection.Close();
             }
             return nameValue;
+        }
+
+        public string IdParametersDataGet(string paramName, string schema)
+        {
+            var paramId = "";
+
+            var tableName = NameModifier.TableNameGet(paramName);
+
+            if (IsTableExists(tableName, schema))
+            {
+                SqlConnection connection = new SqlConnection(connString);
+
+                //finds first occurency of suitable data for a parameter
+                try
+                {
+                    connection.Open();
+
+                    var columnName = NameModifier.ColumnNameGet(paramName);
+
+                    var query = $"SELECT TOP(1) {columnName} FROM {schema}.{tableName} WHERE IsDeleted = 0 ORDER BY NEWID();";
+
+                    var cmd = new SqlCommand(query, connection);
+
+                    using SqlDataReader reader = cmd.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        paramId = reader[columnName].ToString();
+                    }
+                    else
+                    {
+                        paramId = "NULL";
+                    }
+                }
+                finally
+                {
+                    connection.Close();
+                }
+            }
+
+            return paramId;
         }
 
         public List<string> StoredProcedureNamesGet(string schema, string database, string procType)
@@ -202,12 +241,6 @@ namespace GetYourQuery.Data
 
         public List<string> IdListParametersGet(Dictionary<string, string> listIdDict, string schema)
         {
-            //TODO: prepare number of declarations like declare @p{i} dbo.{listIdDict[key]} before hand
-            //TODO: get column and table name from list.Key
-            //TODO: set a loop base on the amount of lists
-            //TODO: get top 3 ids for the list 
-            //TODO: while reader reads set 2 strings: 1. insert into @p{i} values (reader[column name]) 2. ,list.Key = @p{i}
-            //TODO: add those strings to the list
             var idListParams = new List<string>();
 
             if (listIdDict.Count > 0)
@@ -282,22 +315,6 @@ namespace GetYourQuery.Data
             return dataTable;
         }
 
-        public static string QueryGet(string schemaName, string storedProcName, string paramNameAndData, List<string> listParams)
-        {
-            var query = "";
-            if (listParams.Count > 0)
-            {
-                var listDeclaration = listParams[0].Replace(",", Environment.NewLine);
-                query = listDeclaration + Environment.NewLine;
-                query += $"exec [{schemaName}].[{storedProcName}] {Environment.NewLine} {paramNameAndData.TrimStart(',', ' ').Replace(",", Environment.NewLine + ",")} {listParams[1].Replace(",", Environment.NewLine + ",")}";
-            }
-            else
-            {
-                query = $"exec [{schemaName}].[{storedProcName}] {paramNameAndData.TrimStart(',', ' ').Replace(",", Environment.NewLine + ",")}";
-            }
-            return query;
-        }
-
 
         public List<string> SchemaNamesGet()
         {
@@ -327,55 +344,71 @@ namespace GetYourQuery.Data
 
         public string UserIdsGet(List<string> userIdsList, string userSchema)
         {
-            var userId = "";
-
-            //TODO: dynamically get users pk
-            SqlConnection connection = new SqlConnection(connString);
-            try
-            {
-                connection.Open();
-
-                var query = $"SELECT TOP(1) UserId FROM [{userSchema}].[Users]";
-
-                var cmd = new SqlCommand(query, connection);
-
-                using SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    userId = reader["UserId"].ToString();
-                }
-            }
-            finally
-            {
-                connection.Close();
-            }
             var userParams = "";
-
-            foreach (var name in userIdsList)
+            if (userIdsList.Count > 0)
             {
-                userParams += $" ,{name} = '{userId}' ";
+                var userId = "";
+                var userPk = NameModifier.UserPkNameGet(userIdsList[0]);
+                SqlConnection connection = new SqlConnection(connString);
+                try
+                {
+                    connection.Open();
+
+                    var query = $"SELECT TOP(1) {userPk} FROM [{userSchema}].[Users]";
+
+                    var cmd = new SqlCommand(query, connection);
+
+                    using SqlDataReader reader = cmd.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        userId = reader["UserId"].ToString();
+                    }
+                }
+                finally
+                {
+                    connection.Close();
+                }
+
+                foreach (var name in userIdsList)
+                {
+                    userParams += $" ,{name} = '{userId}' ";
+                }
             }
             return userParams;
         }
 
-        public string RelatedParametersDataGet(List<string> idList, DataTable dataTable)
+        public string RelatedParametersDataGet(List<string> idList, DataTable dataTable, string schema)
         {
             DataColumnCollection columns = dataTable.Columns;
             DataRowCollection rows = dataTable.Rows;
-            DataRow row = rows[0];
-
             var relatedIds = "";
 
-            foreach (var parameter in idList)
+            var amount = rows.Count;
+            if (amount > 0)
             {
+                var random = new Random();
 
-                var columnName = NameModifier.ColumnNameGet(parameter);
-                if (columns.Contains(columnName))
+                DataRow row = rows[random.Next(0, amount - 1)];
+
+                foreach (var parameter in idList)
                 {
-                    var id = row[columnName].ToString();
-                    relatedIds += $" ,@filter_{columnName}_eq = '{id}' ";
-                }
+                    var columnName = NameModifier.ColumnNameGet(parameter);
+                    var id = "";
+                    if (columns.Contains(columnName))
+                    {
+                        id = row[columnName].ToString();
 
+                    }
+                    if (String.IsNullOrEmpty(id))
+                    {
+                        id = IdParametersDataGet(parameter, schema);
+                        relatedIds += $" ,{parameter} = '{id}' ";
+                    }
+                    else
+                    {
+                        relatedIds += $" ,{parameter} = '{id}' ";
+                    }
+                }
             }
             return relatedIds;
         }
@@ -449,7 +482,7 @@ namespace GetYourQuery.Data
         }
 
         //Needed for update, delete, get
-        public string PrimaryKeyGet(string schema, string tableName, string pkName)
+        public string PrimaryKeyIdGet(string schema, string tableName, string pkName)
         {
             var pkId = default(Guid).ToString();
 
@@ -539,5 +572,23 @@ namespace GetYourQuery.Data
         {
             ParametersDataTable.Clear();
         }
+
+        public static string QueryGet(string schemaName, string storedProcName, string paramNameAndData, List<string> listParams)
+        {
+            var query = "";
+            if (listParams.Count > 0)
+            {
+                var listDeclaration = listParams[0].Replace(",", Environment.NewLine);
+                query = listDeclaration + Environment.NewLine;
+                query += $"exec [{schemaName}].[{storedProcName}] {Environment.NewLine} {paramNameAndData.TrimStart(',', ' ').Replace(",", Environment.NewLine + ",")} {listParams[1].Replace(",", Environment.NewLine + ",")}";
+            }
+            else
+            {
+                query = $"exec [{schemaName}].[{storedProcName}] {Environment.NewLine} {paramNameAndData.TrimStart(',', ' ').Replace(",", Environment.NewLine + ",")}";
+            }
+            return query;
+        }
+
+
     }
 }

@@ -13,6 +13,7 @@ namespace GetYourQuery.Data
                        .Replace("_eq", "")
                        .Replace("@", "")
                        .Replace("Id", "")
+                       .Replace("_list", "")
                        .Replace("usp_", "")
                        .Replace("sGet", "")
                        .Replace("sAdd", "")
@@ -77,10 +78,30 @@ namespace GetYourQuery.Data
             return names;
         }
 
-        public static Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schema, string procType, string procedure, List<string> IdList, DataTable TableNames)
+        public static Dictionary<string, ColumnTablePair> TableAndColumnNamesSet(string schema, string procType, string procedure, List<string> IdList, DataTable TableNames)
         {
             var paramColumnTable = new Dictionary<string, ColumnTablePair>();
+            //string usersSchema = UsersSchemaNameGet(TableNames);
 
+            foreach (var name in IdList)
+            {
+                if (!name.Contains("ByUserId"))
+                {
+                    var tableName = NameModifier.TableNameGet(name);
+                    var columnName = NameModifier.ColumnNameGet(name);
+
+                    if (IsTableExists(tableName, schema, TableNames) && !(procType == "Add" && tableName == NameModifier.TableNameGet(procedure)))
+                    {
+                        paramColumnTable.Add(name, new ColumnTablePair(columnName, $"[{schema}].[{tableName}]"));
+                    }
+                }
+            }
+
+            return paramColumnTable;
+        }
+
+        public static string UsersSchemaNameSet(DataTable TableNames)
+        {
             var usersSchema = "";
             DataRowCollection rows = TableNames.Rows;
 
@@ -91,16 +112,22 @@ namespace GetYourQuery.Data
                             .AsEnumerable()
                             .Where(row => row.Field<string>(tableColumnName) == "Users");
 
-            foreach (var a in result)
+            foreach (var item in result)
             {
-                usersSchema = a[schemaColumnName].ToString();
+                usersSchema = item[schemaColumnName].ToString();
                 break; //I need the first one. TODO: check if schema for users in 'core", "common", "dbo"
             }
 
-            foreach (var name in IdList)
-            {
+            return usersSchema;
+        }
 
-                if (name.Contains("ByUser"))
+        public static List<string> UserIdNamesSet(List<string> idList, string procType)
+        {
+            var userIds = new List<string>();
+
+            foreach (var name in idList)
+            {
+                if (name.Contains("ByUserId"))
                 {
                     if ((procType == "Update" || procType == "Add") && name.Contains("Deleted")) //filters out DeletedByUserId column for add and update
                     {
@@ -108,23 +135,11 @@ namespace GetYourQuery.Data
                     }
                     else
                     {
-                        paramColumnTable.Add(name, new ColumnTablePair("UserId", $"[{usersSchema}].[Users]"));
-
+                        userIds.Add(name);
                     }
                 }
-                else
-                {
-                    var tableName = NameModifier.TableNameGet(name);
-                    var columnName = NameModifier.ColumnNameGet(name);
-
-                    if (IsTableExists(tableName, schema, TableNames) && !(procType == "Add" && tableName == NameModifier.TableNameGet(procedure)))
-                    {
-                        paramColumnTable.Add(name, new ColumnTablePair(columnName, $"[{schema}].[{tableName}]"));
-                    }
-                };
             }
-
-            return paramColumnTable;
+            return userIds;
         }
 
         public static bool IsTableExists(string tableName, string schema, DataTable TableNames)
@@ -149,13 +164,13 @@ namespace GetYourQuery.Data
 
         public static List<string> IdParamaterNamesSet(DataTable paramsDataTable)
         {
-            List<string> idList = new List<string>();
+            var idList = new List<string>();
 
             DataColumn paramName = paramsDataTable.Columns["PARAMETER_NAME"];
 
             foreach (DataRow row in paramsDataTable.Rows)
             {
-                if (row[paramName].ToString().Contains("Id"))
+                if (row[paramName].ToString().Contains("Id") && !row[paramName].ToString().Contains("list"))
                 {
                     idList.Add(row[paramName].ToString());
                 }
@@ -163,16 +178,33 @@ namespace GetYourQuery.Data
             return idList;
         }
 
-        public static Dictionary<string, string> NonIdParamaterNamesSet(DataTable paramsDataTable)
+        public static Dictionary<string,string> ListIdParamaterNamesSet(DataTable paramsDataTable)
         {
-            Dictionary<string, string> nonIdDict = new Dictionary<string, string>();
+            var listIdDict = new Dictionary<string,string>();
 
             DataColumn paramName = paramsDataTable.Columns["PARAMETER_NAME"];
             DataColumn paramType = paramsDataTable.Columns["DATA_TYPE"];
 
             foreach (DataRow row in paramsDataTable.Rows)
             {
-                //For non-id parameters I need to know data type to generate values for add and update
+                if (row[paramName].ToString().Contains("Id") && row[paramName].ToString().Contains("list"))
+                {
+                    listIdDict.Add(row[paramName].ToString(), row[paramType].ToString());
+                }
+            }
+            return listIdDict;
+        }
+
+        public static Dictionary<string, string> NonIdParamaterNamesSet(DataTable paramsDataTable)
+        {
+            //For non-id parameters I need to know data type to generate values for add and update
+            var nonIdDict = new Dictionary<string, string>();
+
+            DataColumn paramName = paramsDataTable.Columns["PARAMETER_NAME"];
+            DataColumn paramType = paramsDataTable.Columns["DATA_TYPE"];
+
+            foreach (DataRow row in paramsDataTable.Rows)
+            {
                 if (!row[paramName].ToString().Contains("DtLastUpdated") && !row[paramName].ToString().Contains("Id"))
                 {
                     var result = specialCases.IndexOf(row[paramName].ToString());

@@ -8,7 +8,7 @@ namespace GetYourQuery.UI
 {
     public partial class MainForm : Form
     {
-        private IRepository repository;
+        private Repository repository;
 
         private string procType;
         private string storedProcedureName;
@@ -107,22 +107,13 @@ namespace GetYourQuery.UI
 
                 var tableName = NameModifier.TableNameGet(storedProc);
 
-                if (repository.IsTableExists(tableName, schema))
-                {
-                    var data = repository.DataGet(storedProc, schema, procType);
-
-                    queryTextBox.Text = StoredProcQuery.QueryGet(schema, storedProc, data);
-                }
-                else
-                {
-                    queryTextBox.Text = "Sorry, I couldn't find underlying table";
-                }
+                queryTextBox.Text = repository.DataGet(storedProc, schema, procType);
             }
             catch (Exception ex)
             {
                 queryTextBox.Text = ex.ToString();
             }
-            
+
         }
     }
 }

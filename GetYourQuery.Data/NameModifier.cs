@@ -6,28 +6,55 @@ namespace GetYourQuery.Data
 {
     public class NameModifier
     {
-        public static List<string> specialCases = new List<string> { "@debug_mode", "@SortBy", "@SortDirection", "@filter_mf_text_like", "@page_number", "@page_size", "@PageNumber", "@PageSize", "@executed_by_procid", "@filter_DueBy_eq", "@filter_Od_eq" };
+        public static List<string> FsSpecialCases = new List<string> { "@debug_mode", "@SortBy", "@SortDirection", "@filter_mf_text_like", "@page_number", "@page_size", "@PageNumber", "@PageSize", "@executed_by_procid", "@filter_DueBy_eq", "@filter_Od_eq", "@filter_ExternalSourceUniqueId_eq", "@filter_ExternalUniqueId_eq", "@filter_LastUpdatedByAppName_eq" };
+        public static List<string> SnakeSpecialCases = new List<string> { "@debug_mode", "@sort_by", "@sort_direction", "@filter_mf_text_like", "@page_number", "@page_size", "@page_number", "@page_size", "@executed_by_procid", "@filter_DueBy_eq", "@filter_Od_eq" };
         public static string TableNameGet(string name)
         {
             var tableName = name.Replace("@filter_", "")
-                       .Replace("_eq", "")
-                       .Replace("@", "")
-                       .Replace("Id", "")
-                       .Replace("usp_", "")
-                       .Replace("sGet", "")
-                       .Replace("sAdd", "")
-                       .Replace("sDelete", "")
-                       .Replace("Stats", "")
-                       .Replace("sUpdate", "");
+                                .Replace("_eq", "")
+                                .Replace("@", "")
+                                .Replace("Id", "")
+                                .Replace("_list", "")
+                                .Replace("usp_", "")
+                                .Replace("sGet", "")
+                                .Replace("sAdd", "")
+                                .Replace("sDelete", "")
+                                .Replace("Stats", "")
+                                .Replace("sUpdate", "");
 
             if (tableName.EndsWith("y"))
             {
                 tableName = tableName.Replace("y", "ie");
             }
 
+            if (tableName.EndsWith("s"))
+            {
+                tableName += "e";
+            }
             tableName += "s";
 
             return tableName;
+        }
+
+        internal static List<string> UserParamaterNamesSet(DataTable paramsDataTable)
+        {
+            var userIdList = new List<string>();
+
+            DataColumn paramName = paramsDataTable.Columns["PARAMETER_NAME"];
+
+            foreach (DataRow row in paramsDataTable.Rows)
+            {
+                if (row[paramName].ToString().Contains("UserId") && !row[paramName].ToString().Contains("list"))
+                {
+                    var result = FsSpecialCases.IndexOf(row[paramName].ToString());
+
+                    if (result == -1)
+                    {
+                        userIdList.Add(row[paramName].ToString());
+                    }
+                }
+            }
+            return userIdList;
         }
 
         public static string ColumnNameGet(string name)
@@ -38,17 +65,18 @@ namespace GetYourQuery.Data
                        .Replace("_noteq", "")
                        .Replace("_gt", "")
                        .Replace("_lt", "")
+                       .Replace("SelectedBy", "")
                        .Replace("@", "");
         }
 
         public static string PkNameGet(string name)
         {
             var pkName = name.Replace("usp_", "")
-                       .Replace("sGet", "")
-                       .Replace("sAdd", "")
-                       .Replace("sDelete", "")
-                       .Replace("Stats", "")
-                       .Replace("sUpdate", "");
+                             .Replace("sGet", "")
+                             .Replace("sAdd", "")
+                             .Replace("sDelete", "")
+                             .Replace("Stats", "")
+                             .Replace("sUpdate", "");
             //Trims names like companies, facilities
             if (pkName.EndsWith("ie"))
             {
@@ -60,6 +88,22 @@ namespace GetYourQuery.Data
             return pkName;
         }
 
+        public static string UserPkNameGet(string name)
+        {
+            var pkName = name.Replace("@filter_", "")
+                             .Replace("_eq", "")
+                             .Replace("_list", "")
+                             .Replace("_noteq", "")
+                             .Replace("_gt", "")
+                             .Replace("_lt", "")
+                             .Replace("SelectedBy", "")
+                             .Replace("@", "");
+
+            pkName = pkName.Substring(pkName.LastIndexOf("User"));
+
+            return pkName;
+        }
+
         public static List<string> ColumnNameGet(Dictionary<string, string> dict)
         {
             var names = new List<string>();
@@ -67,20 +111,40 @@ namespace GetYourQuery.Data
             foreach (var name in dict.Keys)
             {
                 names.Add(name.Replace("@filter_", "")
-                       .Replace("_eq", "")
-                       .Replace("_list", "")
-                       .Replace("_noteq", "")
-                       .Replace("_gt", "")
-                       .Replace("_lt", "")
-                       .Replace("@", ""));
+                              .Replace("_eq", "")
+                              .Replace("_list", "")
+                              .Replace("_noteq", "")
+                              .Replace("_gt", "")
+                              .Replace("_lt", "")
+                              .Replace("@", ""));
             }
             return names;
         }
 
-        public static Dictionary<string, ColumnTablePair> TableAndColumnNamesGet(string schema, string procType, string procedure, List<string> IdList, DataTable TableNames)
+        public static Dictionary<string, ColumnTablePair> TableAndColumnNamesSet(string schema, string procType, string procedure, List<string> IdList, DataTable TableNames)
         {
             var paramColumnTable = new Dictionary<string, ColumnTablePair>();
+            //string usersSchema = UsersSchemaNameGet(TableNames);
 
+            foreach (var name in IdList)
+            {
+                if (!name.Contains("ByUserId"))
+                {
+                    var tableName = NameModifier.TableNameGet(name);
+                    var columnName = NameModifier.ColumnNameGet(name);
+
+                    if (IsTableExists(tableName, schema, TableNames) && !(procType == "Add" && tableName == NameModifier.TableNameGet(procedure)))
+                    {
+                        paramColumnTable.Add(name, new ColumnTablePair(columnName, $"[{schema}].[{tableName}]"));
+                    }
+                }
+            }
+
+            return paramColumnTable;
+        }
+
+        public static string UsersSchemaNameSet(DataTable TableNames)
+        {
             var usersSchema = "";
             DataRowCollection rows = TableNames.Rows;
 
@@ -91,40 +155,31 @@ namespace GetYourQuery.Data
                             .AsEnumerable()
                             .Where(row => row.Field<string>(tableColumnName) == "Users");
 
-            foreach (var a in result)
+            foreach (var item in result)
             {
-                usersSchema = a[schemaColumnName].ToString();
+                usersSchema = item[schemaColumnName].ToString();
                 break; //I need the first one. TODO: check if schema for users in 'core", "common", "dbo"
             }
 
-            foreach (var name in IdList)
+            return usersSchema;
+        }
+
+        public static List<string> UserIdNamesSet(List<string> idList, string procType)
+        {
+            var userIds = new List<string>();
+
+            foreach (var name in idList)
             {
-
-                if (name.Contains("ByUser"))
+                if ((procType == "Update" || procType == "Add") && name.Contains("Deleted")) //filters out DeletedByUserId column for add and update
                 {
-                    if ((procType == "Update" || procType == "Add") && name.Contains("Deleted")) //filters out DeletedByUserId column for add and update
-                    {
-                        continue;
-                    }
-                    else
-                    {
-                        paramColumnTable.Add(name, new ColumnTablePair("UserId", $"[{usersSchema}].[Users]"));
-
-                    }
+                    continue;
                 }
                 else
                 {
-                    var tableName = NameModifier.TableNameGet(name);
-                    var columnName = NameModifier.ColumnNameGet(name);
-
-                    if (IsTableExists(tableName, schema, TableNames) && !(procType == "Add" && tableName == NameModifier.TableNameGet(procedure)))
-                    {
-                        paramColumnTable.Add(name, new ColumnTablePair(columnName, $"[{schema}].[{tableName}]"));
-                    }
-                };
+                    userIds.Add(name);
+                }
             }
-
-            return paramColumnTable;
+            return userIds;
         }
 
         public static bool IsTableExists(string tableName, string schema, DataTable TableNames)
@@ -149,33 +204,55 @@ namespace GetYourQuery.Data
 
         public static List<string> IdParamaterNamesSet(DataTable paramsDataTable)
         {
-            List<string> idList = new List<string>();
+            var idList = new List<string>();
 
             DataColumn paramName = paramsDataTable.Columns["PARAMETER_NAME"];
 
             foreach (DataRow row in paramsDataTable.Rows)
             {
-                if (row[paramName].ToString().Contains("Id"))
+                if (row[paramName].ToString().Contains("Id") && !row[paramName].ToString().Contains("UserId") && !row[paramName].ToString().Contains("list"))
                 {
-                    idList.Add(row[paramName].ToString());
+                    var result = FsSpecialCases.IndexOf(row[paramName].ToString());
+
+                    if (result == -1)
+                    {
+                        idList.Add(row[paramName].ToString());
+                    }
                 }
             }
             return idList;
         }
 
-        public static Dictionary<string, string> NonIdParamaterNamesSet(DataTable paramsDataTable)
+        public static Dictionary<string, string> ListIdParamaterNamesSet(DataTable paramsDataTable)
         {
-            Dictionary<string, string> nonIdDict = new Dictionary<string, string>();
+            var listIdDict = new Dictionary<string, string>();
 
             DataColumn paramName = paramsDataTable.Columns["PARAMETER_NAME"];
             DataColumn paramType = paramsDataTable.Columns["DATA_TYPE"];
 
             foreach (DataRow row in paramsDataTable.Rows)
             {
-                //For non-id parameters I need to know data type to generate values for add and update
+                if (row[paramName].ToString().Contains("Id") && row[paramName].ToString().Contains("list"))
+                {
+                    listIdDict.Add(row[paramName].ToString(), row[paramType].ToString());
+                }
+            }
+            return listIdDict;
+        }
+
+        public static Dictionary<string, string> NonIdParamaterNamesSet(DataTable paramsDataTable)
+        {
+            //For non-id parameters I need to know data type to generate values for add and update
+            var nonIdDict = new Dictionary<string, string>();
+
+            DataColumn paramName = paramsDataTable.Columns["PARAMETER_NAME"];
+            DataColumn paramType = paramsDataTable.Columns["DATA_TYPE"];
+
+            foreach (DataRow row in paramsDataTable.Rows)
+            {
                 if (!row[paramName].ToString().Contains("DtLastUpdated") && !row[paramName].ToString().Contains("Id"))
                 {
-                    var result = specialCases.IndexOf(row[paramName].ToString());
+                    var result = FsSpecialCases.IndexOf(row[paramName].ToString());
 
                     if (result == -1)
                     {
@@ -194,11 +271,11 @@ namespace GetYourQuery.Data
 
             foreach (DataRow row in paramsDataTable.Rows)
             {
-                var result = specialCases.IndexOf(row[paramName].ToString());
+                var result = FsSpecialCases.IndexOf(row[paramName].ToString());
 
                 if (result != -1)
                 {
-                    specialParams += $" ,{specialCases[result]} = null";
+                    specialParams += $" ,{FsSpecialCases[result]} = null";
                 }
             }
             return specialParams;
